@@ -1,0 +1,52 @@
+import type { ChemistryElement } from './data';
+
+export type GamePhase = 'lobby' | 'drafting' | 'scoring' | 'finished';
+
+export interface Player {
+  id: string;
+  name: string;
+  isHost: boolean;
+  draftedCards: ChemistryElement[];
+  hand: ChemistryElement[];
+  score?: number;
+}
+
+export interface WordSpellingWinner {
+  playerId: string;
+  round: number;
+}
+
+export interface GameState {
+  id: string;
+  phase: GamePhase;
+  players: Player[];
+  deck: ChemistryElement[];
+  currentRound: number;
+  totalRounds: number;
+  wordSpellingWinners: WordSpellingWinner[]; // Players who have spelled 5-letter words with round info
+  createdAt: number;
+  hostId: string;
+}
+
+export interface LobbyState {
+  id: string;
+  players: Omit<Player, 'draftedCards' | 'hand' | 'score'>[];
+  hostId: string;
+  createdAt: number;
+}
+
+export interface DraftSelection {
+  playerId: string;
+  cardIndex: number;
+  timestamp: number;
+}
+
+export interface GameScore {
+  atomicNumber: number;
+  atomicMass: number;
+  atomicSymbol: number;
+  radioactivity: number;
+  ionization: number;
+  family: number;
+  total: number;
+}
