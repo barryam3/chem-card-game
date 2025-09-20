@@ -1,11 +1,19 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to all documents for development
-    // WARNING: These rules are for development only!
-    // Never use these rules in production!
-    match /{document=**} {
+    // Allow read/write access to lobbies and games collections
+    // This is still permissive but scoped to game data only
+    match /lobbies/{lobbyId} {
       allow read, write: if true;
+    }
+    
+    match /games/{gameId} {
+      allow read, write: if true;
+    }
+    
+    // Deny access to all other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

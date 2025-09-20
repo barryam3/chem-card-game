@@ -1,14 +1,15 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
-// Firebase configuration
+// Firebase configuration - Production
 const firebaseConfig = {
-  apiKey: "demo-api-key",
+  apiKey: "AIzaSyAxeBAxKalFCIl6Buut5y5eG7Kee47mENs",
   authDomain: "chem-card-game.firebaseapp.com",
   projectId: "chem-card-game",
-  storageBucket: "chem-card-game.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  storageBucket: "chem-card-game.firebasestorage.app",
+  messagingSenderId: "484362725443",
+  appId: "1:484362725443:web:3274afc3c009e271b8ccf6",
+  measurementId: "G-099MXETX8X"
 };
 
 // Initialize Firebase
