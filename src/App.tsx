@@ -239,11 +239,6 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>Chemistry Card Game</h1>
-        {gameId && (
-          <div className="game-info">
-            Game ID: {gameId} | Player: {playerId}
-          </div>
-        )}
       </header>
       
       <main className="app-main">

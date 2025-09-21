@@ -35,26 +35,30 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 		return <div>Player not found</div>;
 	}
 
-	const handleCardSelect = (index: number) => {
+	// Check if current player has already submitted for this round
+	// They have submitted if they have at least as many drafted cards as the current round
+	const hasSubmitted = currentPlayer.draftedCards.length >= game.currentRound;
+
+	const handleCardSelect = async (index: number) => {
+		// Don't allow selection if currently submitting or already submitted
+		if (isSubmitting || hasSubmitted) return;
+		
 		setSelectedCardIndex(index);
-	};
-
-	const handleSubmitSelection = async () => {
-		if (selectedCardIndex === null) return;
-
 		setIsSubmitting(true);
+		
 		const success = await submitDraftSelection(
 			game.id,
 			currentPlayerId,
-			selectedCardIndex,
+			index,
 		);
 
 		if (!success) {
 			alert("Failed to submit selection. Please try again.");
-			setIsSubmitting(false);
+			setSelectedCardIndex(null);
 		}
-		// If successful, the component will re-render with updated game state
+		setIsSubmitting(false);
 	};
+
 
 	const handleWordSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -85,10 +89,15 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 		}
 	};
 
+	// Check if all players have made their selection for this round
+	// Each player should have at least as many drafted cards as the current round number
+	const allPlayersReady = game.players.every(
+		(player) => player.draftedCards.length >= game.currentRound
+	);
+
 	return (
 		<div className="drafting-phase">
 			<div className="drafting-header">
-				<h2>Drafting Phase</h2>
 				<div className="round-info">
 					Round {game.currentRound} of {game.totalRounds}
 				</div>
@@ -103,7 +112,10 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 					</p>
 					<div className="hand">
 						{currentPlayer.hand
-							.map((atomicNumber, index) => ({ atomicNumber, originalIndex: index }))
+							.map((atomicNumber, index) => ({
+								atomicNumber,
+								originalIndex: index,
+							}))
 							.sort((a, b) => a.atomicNumber - b.atomicNumber)
 							.map(({ atomicNumber, originalIndex }) => {
 								const element = getElementByAtomicNumber(atomicNumber);
@@ -114,24 +126,11 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 										element={element}
 										onClick={() => handleCardSelect(originalIndex)}
 										isSelected={selectedCardIndex === originalIndex}
-										isDisabled={isSubmitting}
+										isDisabled={isSubmitting || (hasSubmitted && allPlayersReady)}
 									/>
 								);
 							})}
 					</div>
-
-					{selectedCardIndex !== null && (
-						<div className="selection-actions">
-							<button
-								type="button"
-								onClick={handleSubmitSelection}
-								disabled={isSubmitting}
-								className="submit-selection-btn"
-							>
-								{isSubmitting ? "Waiting for others..." : "Draft This Card"}
-							</button>
-						</div>
-					)}
 				</div>
 
 				<div className="drafted-cards-section">
@@ -151,8 +150,12 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 							const unrevealedAtomicNumbers = player.draftedCards.slice(
 								game.currentRound - 1,
 							);
-							const revealedCards = revealedAtomicNumbers.map(num => getElementByAtomicNumber(num)).filter((el): el is ChemistryElement => el !== undefined);
-							const unrevealedCards = unrevealedAtomicNumbers.map(num => getElementByAtomicNumber(num)).filter((el): el is ChemistryElement => el !== undefined);
+							const revealedCards = revealedAtomicNumbers
+								.map((num) => getElementByAtomicNumber(num))
+								.filter((el): el is ChemistryElement => el !== undefined);
+							const unrevealedCards = unrevealedAtomicNumbers
+								.map((num) => getElementByAtomicNumber(num))
+								.filter((el): el is ChemistryElement => el !== undefined);
 
 							return (
 								<div key={player.id} className="player-drafted-cards">
@@ -219,7 +222,9 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 							0,
 							game.currentRound - 1,
 						);
-						const revealedCards = revealedAtomicNumbers.map(num => getElementByAtomicNumber(num)).filter((el): el is ChemistryElement => el !== undefined);
+						const revealedCards = revealedAtomicNumbers
+							.map((num) => getElementByAtomicNumber(num))
+							.filter((el): el is ChemistryElement => el !== undefined);
 						const canSpellWords =
 							revealedCards
 								.map((c) => c.atomicSymbol.length)
