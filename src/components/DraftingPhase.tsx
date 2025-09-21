@@ -21,16 +21,16 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 	const [wordSubmitting, setWordSubmitting] = useState(false);
 	const [wordError, setWordError] = useState("");
 
-	const currentPlayer = game.players.find((p) => p.id === currentPlayerId);
-	if (!currentPlayer) {
-		return <div>Player not found</div>;
-	}
-
 	// Reset submitting state when game state changes (new round or phase change)
 	useEffect(() => {
 		setIsSubmitting(false);
 		setSelectedCardIndex(null);
 	}, [game.currentRound, game.phase]);
+
+	const currentPlayer = game.players.find((p) => p.id === currentPlayerId);
+	if (!currentPlayer) {
+		return <div>Player not found</div>;
+	}
 
 	const handleCardSelect = (index: number) => {
 		setSelectedCardIndex(index);
@@ -81,11 +81,6 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 			}
 		}
 	};
-
-	// Check if all players have made their selection (same logic as in submitDraftSelection)
-	const maxHandLength = Math.max(...game.players.map((p) => p.hand.length));
-	const minHandLength = Math.min(...game.players.map((p) => p.hand.length));
-	const allPlayersReady = maxHandLength === minHandLength;
 
 	return (
 		<div className="drafting-phase">
