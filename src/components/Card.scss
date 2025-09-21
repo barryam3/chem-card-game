@@ -47,7 +47,7 @@
     grid-row: 1;
     grid-column: 1 / span 3;
     justify-self: center;
-    font-size: 11px;
+    font-size: 13px; // Increased from 11px
     font-weight: $font-weight-bold;
     color: $text-primary;
     text-align: center;
@@ -59,7 +59,7 @@
     grid-row: 2;
     grid-column: 1 / span 3;
     justify-self: center;
-    font-size: 7px;
+    font-size: 9px; // Increased from 7px
     color: $text-primary;
     text-align: center;
     font-weight: $font-weight-medium;
@@ -96,7 +96,7 @@
     gap: 1px;
     
     span {
-      font-size: 10px;
+      font-size: 12px; // Increased from 10px
       line-height: 1;
     }
 
@@ -119,11 +119,21 @@
     align-self: end;
     display: flex;
     flex-direction: row;
-    gap: 1px;
+    gap: 2px;
+    align-items: center;
     
-    span {
-      font-size: 10px;
+    .mass-symbol {
+      font-size: 12px; // For emoji fallback
       line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      // Style the SVG icons
+      svg {
+        color: $text-primary;
+        opacity: 0.8;
+      }
     }
   }
 
@@ -132,7 +142,7 @@
     grid-row: 4;
     grid-column: 1;
     align-self: end;
-    font-size: 9px;
+    font-size: 11px; // Increased from 9px
     font-weight: $font-weight-semibold;
     color: $text-primary;
   }
@@ -143,7 +153,7 @@
     grid-column: 3;
     justify-self: end;
     align-self: end;
-    font-size: 9px;
+    font-size: 11px; // Increased from 9px
     font-weight: $font-weight-bold;
     color: $text-primary;
   }
@@ -153,7 +163,7 @@
     position: absolute;
     top: 4px;
     right: 4px;
-    font-size: 8px;
+    font-size: 10px; // Increased from 8px
     opacity: 0.8;
   }
 
@@ -207,11 +217,11 @@
     padding: 6px;
     
     .name {
-      font-size: 9px;
+      font-size: 11px; // Increased from 9px
     }
     
     .family {
-      font-size: 6px;
+      font-size: 8px; // Increased from 6px
     }
     
     .cartoon {
@@ -219,17 +229,22 @@
     }
     
     .ion span,
-    .mass span {
-      font-size: 8px;
+    .mass .mass-symbol {
+      font-size: 10px; // Increased from 8px
+      
+      svg {
+        width: 12px; // Increased from 10px
+        height: 12px; // Increased from 10px
+      }
     }
     
     .number,
     .symbol {
-      font-size: 7px;
+      font-size: 9px; // Increased from 7px
     }
     
     .radioactive-indicator {
-      font-size: 6px;
+      font-size: 8px; // Increased from 6px
     }
   }
 }

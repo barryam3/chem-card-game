@@ -1,5 +1,6 @@
 import type { ChemistryElement } from "../data";
-import './Card.scss';
+import { WeightIcon } from "./WeightIcon";
+import "./Card.scss";
 
 interface CardProps {
 	element: ChemistryElement;
@@ -23,18 +24,19 @@ export const Card: React.FC<CardProps> = ({
 		return family.toLowerCase().replaceAll(" ", "-");
 	};
 
-	const renderIonSymbols = (count: number, type: 'positive' | 'negative') => {
+	const renderIonSymbols = (count: number, type: "positive" | "negative") => {
 		if (!count) return null;
-		const symbol = type === 'positive' ? '➕' : '➖';
-		return new Array(count).fill(0).map((_, index) => (
-			<span key={index}>{symbol}</span>
-		));
+		const symbol = type === "positive" ? "➕" : "➖";
+		return new Array(count)
+			.fill(0)
+			.map((_, index) => <span key={index}>{symbol}</span>);
 	};
 
-	const renderMassSymbols = (massGroup: number, radioactive: boolean) => {
-		const symbol = radioactive ? '☢️' : '🪨';
+	const renderMassSymbols = (massGroup: number) => {
 		return new Array(massGroup).fill(0).map((_, index) => (
-			<span key={index}>{symbol}</span>
+			<span key={index} className="mass-symbol">
+				<WeightIcon />
+			</span>
 		));
 	};
 
@@ -47,10 +49,10 @@ export const Card: React.FC<CardProps> = ({
 		>
 			{/* Element name at the top */}
 			<div className="name">{element.name}</div>
-			
+
 			{/* Family name below element name (for color blindness) */}
 			<div className="family">{element.family}</div>
-			
+
 			{/* Element image in the center */}
 			<div className="cartoon">
 				<img
@@ -62,32 +64,30 @@ export const Card: React.FC<CardProps> = ({
 					}}
 				/>
 			</div>
-			
+
 			{/* Negative ions on the left */}
 			<div className="ion negative">
-				{renderIonSymbols(element.negativeIon || 0, 'negative')}
+				{renderIonSymbols(element.negativeIon || 0, "negative")}
 			</div>
-			
+
 			{/* Positive ions on the right */}
 			<div className="ion positive">
-				{renderIonSymbols(element.positiveIon || 0, 'positive')}
+				{renderIonSymbols(element.positiveIon || 0, "positive")}
 			</div>
-			
+
 			{/* Mass symbols at the bottom center */}
 			<div className="mass">
 				{renderMassSymbols(element.massGroup, element.radioactive || false)}
 			</div>
-			
+
 			{/* Atomic number at bottom left */}
 			<div className="number">{element.atomicNumber}</div>
-			
+
 			{/* Atomic symbol at bottom right */}
 			<div className="symbol">{element.atomicSymbol}</div>
-			
+
 			{/* Keep radioactive symbol for digital game */}
-			{element.radioactive && (
-				<div className="radioactive-indicator">☢️</div>
-			)}
+			{element.radioactive && <div className="radioactive-indicator">☢️</div>}
 		</button>
 	);
 };
