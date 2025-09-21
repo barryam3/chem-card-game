@@ -30,7 +30,7 @@ export const GameSetup: React.FC<GameSetupProps> = ({ onJoinLobby }) => {
       setGameIdInUrl(gameId);
       setPlayerIdInUrl(playerId);
       onJoinLobby(gameId, playerId, true, 'Player 1');
-    } catch (err) {
+    } catch {
       setError('Failed to create game. Please try again.');
       setIsCreating(false);
     }
@@ -56,7 +56,7 @@ export const GameSetup: React.FC<GameSetupProps> = ({ onJoinLobby }) => {
         setError('Game not found. Please check the game ID.');
         setIsJoining(false);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to join game. Please try again.');
       setIsJoining(false);
     }

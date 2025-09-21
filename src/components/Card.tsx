@@ -77,7 +77,7 @@ export const Card: React.FC<CardProps> = ({
 
 			{/* Mass symbols at the bottom center */}
 			<div className="mass">
-				{renderMassSymbols(element.massGroup, element.radioactive || false)}
+				{renderMassSymbols(element.massGroup)}
 			</div>
 
 			{/* Atomic number at bottom left */}
