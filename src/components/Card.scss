@@ -2,20 +2,34 @@
 @use '../styles/mixins' as *;
 
 .card {
+  // Base card styling
   background: $bg-primary;
   border: 3px solid $border-color;
   border-radius: $border-radius-lg;
-  padding: $spacing-md;
-  width: 120px;
-  height: 160px;
-  @include flex-column;
   cursor: pointer;
   transition: all $transition-normal;
   box-shadow: $shadow-sm;
   font-family: inherit;
+  
+  // Card dimensions - maintaining aspect ratio similar to physical cards
+  width: 120px;
+  height: 168px; // 3.5/2.5 ratio = 1.4, so 120 * 1.4 = 168
+  
+  // Grid layout matching physical card design
+  display: grid;
+  grid-template-columns: 0.2fr 1fr 0.2fr; // left, center, right
+  grid-template-rows: auto auto 1fr auto; // name, family, image area, bottom info
+  padding: 8px;
+  gap: 2px;
+  
+  // Ensure grid container doesn't overflow
+  min-height: 0;
+  min-width: 0;
 
+  // Hover and interaction states
   &:hover:not(.disabled) {
-    @include card-hover;
+    transform: translateY(-5px);
+    box-shadow: $shadow-md;
   }
 
   &.selected {
@@ -28,78 +42,194 @@
     cursor: not-allowed;
   }
 
-  .card-header {
-    @include flex-between;
-    margin-bottom: $spacing-sm;
+  // Element name at the top
+  .name {
+    grid-row: 1;
+    grid-column: 1 / span 3;
+    justify-self: center;
+    font-size: 11px;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    text-align: center;
+    line-height: 1.1;
   }
 
-  .atomic-number {
-    font-size: $font-size-sm;
-    color: $text-secondary;
+  // Family name below element name (for accessibility)
+  .family {
+    grid-row: 2;
+    grid-column: 1 / span 3;
+    justify-self: center;
+    font-size: 7px;
+    color: $text-primary;
+    text-align: center;
+    font-weight: $font-weight-medium;
+    opacity: 0.8;
+  }
+
+  // Element image in the center
+  .cartoon {
+    grid-row: 3;
+    grid-column: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; // Prevent image overflow
+    min-height: 0; // Allow grid item to shrink
+    max-height: 100px; // Constrain maximum height
+    
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block; // Remove inline spacing
+    }
+  }
+
+  // Ion indicators
+  .ion {
+    grid-row: 3;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    
+    span {
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    &.negative {
+      grid-column: 1;
+      justify-self: center;
+    }
+
+    &.positive {
+      grid-column: 3;
+      justify-self: center;
+    }
+  }
+
+  // Mass indicators at bottom center
+  .mass {
+    grid-row: 4;
+    grid-column: 2;
+    justify-self: center;
+    align-self: end;
+    display: flex;
+    flex-direction: row;
+    gap: 1px;
+    
+    span {
+      font-size: 10px;
+      line-height: 1;
+    }
+  }
+
+  // Atomic number at bottom left
+  .number {
+    grid-row: 4;
+    grid-column: 1;
+    align-self: end;
+    font-size: 9px;
     font-weight: $font-weight-semibold;
+    color: $text-primary;
   }
 
-  .atomic-symbol {
-    font-size: $font-size-xl;
+  // Atomic symbol at bottom right
+  .symbol {
+    grid-row: 4;
+    grid-column: 3;
+    justify-self: end;
+    align-self: end;
+    font-size: 9px;
     font-weight: $font-weight-bold;
     color: $text-primary;
   }
 
-  .card-image {
-    flex: 1;
-    @include flex-center;
-    margin: $spacing-sm 0;
-
-    img {
-      max-width: 60px;
-      max-height: 60px;
-      object-fit: contain;
-    }
+  // Radioactive indicator (digital game only)
+  .radioactive-indicator {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 8px;
+    opacity: 0.8;
   }
 
-  .card-name {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    color: $text-primary;
-    text-align: center;
-    margin-bottom: $spacing-sm;
+  // Family background colors (matching physical game)
+  &.nonmetal {
+    background-color: rgba(230, 30, 80, 0.5); // #e61e5080
   }
 
-  .card-details {
-    font-size: $font-size-xs;
-    color: $text-secondary;
+  &.noble-gas {
+    background-color: rgba(215, 179, 191, 0.5); // #d7b3bf80
+  }
 
-    .mass-group {
-      margin-bottom: $spacing-xs;
+  &.alkali-metal {
+    background-color: rgba(157, 200, 71, 0.5); // #9dc84780
+  }
+
+  &.alkaline-earth-metal {
+    background-color: rgba(14, 154, 96, 0.5); // #0e9a6080
+  }
+
+  &.metalloid {
+    background-color: rgba(128, 109, 182, 0.5); // #806db680
+  }
+
+  &.halogen {
+    background-color: rgba(232, 60, 149, 0.5); // #e83c9580
+  }
+
+  &.lanthanide {
+    background-color: rgba(45, 190, 205, 0.5); // #2dbecd80
+  }
+
+  &.actinide {
+    background-color: rgba(149, 215, 209, 0.5); // #95d7d180
+  }
+
+  &.transition-metal {
+    background-color: rgba(15, 105, 175, 0.5); // #0f69af80
+  }
+
+  &.metal {
+    background-color: rgba(79, 51, 155, 0.5); // #4f339b80
+  }
+}
+
+// Responsive adjustments for smaller screens
+@include mobile {
+  .card {
+    width: 100px;
+    height: 140px;
+    padding: 6px;
+    
+    .name {
+      font-size: 9px;
     }
-
+    
     .family {
-      padding: 0.2rem 0.4rem;
-      border-radius: $border-radius-sm;
-      text-align: center;
-      margin-bottom: $spacing-xs;
-      font-weight: $font-weight-semibold;
-      color: $text-white;
-      @include text-shadow;
+      font-size: 6px;
     }
-
-    .radioactive {
-      color: $secondary-color;
-      font-weight: $font-weight-semibold;
-      text-align: center;
+    
+    .cartoon {
+      max-height: 80px; // Smaller constraint for mobile
     }
-
-    .ion {
-      text-align: center;
-      font-weight: $font-weight-semibold;
-
-      &.positive {
-        color: $primary-color;
-      }
-
-      &.negative {
-        color: $secondary-color;
-      }
+    
+    .ion span,
+    .mass span {
+      font-size: 8px;
+    }
+    
+    .number,
+    .symbol {
+      font-size: 7px;
+    }
+    
+    .radioactive-indicator {
+      font-size: 6px;
     }
   }
 }

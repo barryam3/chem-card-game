@@ -183,7 +183,6 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 														<Card
 															key={`${player.id}-revealed-${element.atomicNumber}-${index}`}
 															element={element}
-															showDetails={false}
 														/>
 													))}
 											</div>
@@ -200,7 +199,6 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 														<Card
 															key={`${player.id}-unrevealed-${element.atomicNumber}-${index}`}
 															element={element}
-															showDetails={false}
 														/>
 													))}
 											</div>
