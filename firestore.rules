@@ -22,7 +22,7 @@ service cloud.firestore {
              data.keys().hasOnly(['id', 'players', 'hostId', 'createdAt', 'ttl']) &&
              isValidGameId(data.id) &&
              data.players is list &&
-             data.players.size() >= 1 && data.players.size() <= 8 && // Max 8 players
+             data.players.size() >= 1 && data.players.size() <= 10 && // Max 10 players
              data.hostId is string &&
              isRecentTimestamp(data.createdAt);
     }
@@ -31,7 +31,7 @@ service cloud.firestore {
       return data.keys().hasAll(['id', 'phase', 'players', 'currentRound', 'totalRounds', 'createdAt', 'hostId']) &&
              data.phase in ['drafting', 'scoring'] &&
              data.players is list &&
-             data.players.size() >= 2 && data.players.size() <= 8 &&
+             data.players.size() >= 2 && data.players.size() <= 10 &&
              data.currentRound is number && data.currentRound >= 1 && data.currentRound <= 50 &&
              data.totalRounds is number && data.totalRounds >= 1 && data.totalRounds <= 50 &&
              isRecentTimestamp(data.createdAt);
