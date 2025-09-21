@@ -130,8 +130,9 @@
       justify-content: center;
       
       // Style the SVG icons
-      svg {
-        color: $text-primary;
+      img {
+        width: 14px;
+        height: 14px;
         opacity: 0.8;
       }
     }
@@ -232,7 +233,7 @@
     .mass .mass-symbol {
       font-size: 10px; // Increased from 8px
       
-      svg {
+      img {
         width: 12px; // Increased from 10px
         height: 12px; // Increased from 10px
       }

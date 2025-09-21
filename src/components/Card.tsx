@@ -1,5 +1,4 @@
 import type { ChemistryElement } from "../data";
-import { WeightIcon } from "./WeightIcon";
 import "./Card.scss";
 
 interface CardProps {
@@ -35,7 +34,7 @@ export const Card: React.FC<CardProps> = ({
 	const renderMassSymbols = (massGroup: number) => {
 		return new Array(massGroup).fill(0).map((_, index) => (
 			<span key={index} className="mass-symbol">
-				<WeightIcon />
+				<img src="/assets/weight-icon.svg" alt="Weight" />
 			</span>
 		));
 	};
