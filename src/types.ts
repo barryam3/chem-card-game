@@ -7,8 +7,8 @@ export interface Player {
   id: string;
   name: string;
   isHost: boolean;
-  draftedCards: ChemistryElement[];
-  hand: ChemistryElement[];
+  draftedCards: number[]; // Store atomic numbers only
+  hand: number[]; // Store atomic numbers only
   score?: number;
 }
 

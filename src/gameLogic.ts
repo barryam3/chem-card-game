@@ -1,6 +1,16 @@
-import { gameData } from "./data";
+import { gameData, getMassGroup } from "./data";
 import type { ChemistryElement } from "./data";
 import type { GameScore } from "./types";
+
+// Helper function to get element by atomic number
+export function getElementByAtomicNumber(atomicNumber: number): ChemistryElement | undefined {
+  return gameData.find(element => element.atomicNumber === atomicNumber);
+}
+
+// Helper function to convert atomic numbers to elements
+export function getElementsFromAtomicNumbers(atomicNumbers: number[]): ChemistryElement[] {
+  return atomicNumbers.map(num => getElementByAtomicNumber(num)).filter((el): el is ChemistryElement => el !== undefined);
+}
 
 // Shuffle array using Fisher-Yates algorithm
 export function shuffleArray<T>(array: T[]): T[] {
@@ -34,7 +44,7 @@ export function getDeckConfig(players: number): {
 }
 
 // Deal cards to players
-export function dealCards(players: number): ChemistryElement[][] {
+export function dealCards(players: number): number[][] {
   const { deckSize, handSize } = getDeckConfig(players);
 
   // Filter deck to only include cards with atomic number <= deckSize
@@ -42,29 +52,28 @@ export function dealCards(players: number): ChemistryElement[][] {
   const shuffledDeck = shuffleArray([...filteredDeck]);
 
   // Use the specific hand size from the config, not calculated from deck size
-  const hands: ChemistryElement[][] = [];
+  const hands: number[][] = [];
 
   for (let i = 0; i < players; i++) {
     const startIndex = i * handSize;
     const endIndex = startIndex + handSize;
-    hands.push(shuffledDeck.slice(startIndex, endIndex));
+    // Extract atomic numbers instead of full elements
+    hands.push(shuffledDeck.slice(startIndex, endIndex).map(element => element.atomicNumber));
   }
 
   return hands;
 }
 
 // Calculate atomic number score (longest consecutive sequence squared, capped at 4)
-export function calculateAtomicNumberScore(cards: ChemistryElement[]): number {
-  if (cards.length === 0) return 0;
+export function calculateAtomicNumberScore(atomicNumbers: number[]): number {
+  if (atomicNumbers.length === 0) return 0;
 
-  const atomicNumbers = cards
-    .map((card) => card.atomicNumber)
-    .sort((a, b) => a - b);
+  const sortedNumbers = [...atomicNumbers].sort((a, b) => a - b);
   let maxSequence = 1;
   let currentSequence = 1;
 
-  for (let i = 1; i < atomicNumbers.length; i++) {
-    if (atomicNumbers[i] === atomicNumbers[i - 1] + 1) {
+  for (let i = 1; i < sortedNumbers.length; i++) {
+    if (sortedNumbers[i] === sortedNumbers[i - 1] + 1) {
       currentSequence++;
       maxSequence = Math.max(maxSequence, currentSequence);
     } else {
@@ -79,17 +88,21 @@ export function calculateAtomicNumberScore(cards: ChemistryElement[]): number {
 
 // Calculate atomic mass score (compare with neighbors)
 export function calculateAtomicMassScore(
-  playerCards: ChemistryElement[],
-  leftNeighborCards: ChemistryElement[],
-  rightNeighborCards: ChemistryElement[]
+  playerAtomicNumbers: number[],
+  leftNeighborAtomicNumbers: number[],
+  rightNeighborAtomicNumbers: number[]
 ): number {
-  const playerMass = playerCards.reduce((sum, card) => sum + card.massGroup, 0);
-  const leftMass = leftNeighborCards.reduce(
-    (sum, card) => sum + card.massGroup,
+  const playerElements = getElementsFromAtomicNumbers(playerAtomicNumbers);
+  const leftElements = getElementsFromAtomicNumbers(leftNeighborAtomicNumbers);
+  const rightElements = getElementsFromAtomicNumbers(rightNeighborAtomicNumbers);
+
+  const playerMass = playerElements.reduce((sum, card) => sum + getMassGroup(card), 0);
+  const leftMass = leftElements.reduce(
+    (sum, card) => sum + getMassGroup(card),
     0
   );
-  const rightMass = rightNeighborCards.reduce(
-    (sum, card) => sum + card.massGroup,
+  const rightMass = rightElements.reduce(
+    (sum, card) => sum + getMassGroup(card),
     0
   );
 
@@ -103,8 +116,9 @@ export function calculateAtomicMassScore(
 }
 
 // Check if a 5-letter word can be spelled with atomic symbols
-export function canSpellWord(cards: ChemistryElement[], word: string): boolean {
-  const symbols = cards.map((card) => card.atomicSymbol);
+export function canSpellWord(atomicNumbers: number[], word: string): boolean {
+  const elements = getElementsFromAtomicNumbers(atomicNumbers);
+  const symbols = elements.map((card) => card.atomicSymbol);
   return canSpellWordWithSymbols(symbols, word);
 }
 
@@ -124,8 +138,9 @@ export function canSpellWordWithSymbols(
 }
 
 // Calculate radioactivity score
-export function calculateRadioactivityScore(cards: ChemistryElement[]): number {
-  const radioactiveCount = cards.filter((card) => card.radioactive).length;
+export function calculateRadioactivityScore(atomicNumbers: number[]): number {
+  const elements = getElementsFromAtomicNumbers(atomicNumbers);
+  const radioactiveCount = elements.filter((card) => card.radioactive).length;
 
   if (radioactiveCount >= 2) return 7;
   if (radioactiveCount === 1) return -3;
@@ -133,11 +148,12 @@ export function calculateRadioactivityScore(cards: ChemistryElement[]): number {
 }
 
 // Calculate ionization score (matching positive/negative ion pairs)
-export function calculateIonizationScore(cards: ChemistryElement[]): number {
+export function calculateIonizationScore(atomicNumbers: number[]): number {
+  const elements = getElementsFromAtomicNumbers(atomicNumbers);
   const positiveIons: { [charge: number]: number } = {};
   const negativeIons: { [charge: number]: number } = {};
 
-  for (const card of cards) {
+  for (const card of elements) {
     if (card.positiveIon) {
       positiveIons[card.positiveIon] =
         (positiveIons[card.positiveIon] || 0) + 1;
@@ -162,10 +178,11 @@ export function calculateIonizationScore(cards: ChemistryElement[]): number {
 }
 
 // Calculate family score (capped at maximum of 6 elements)
-export function calculateFamilyScore(cards: ChemistryElement[]): number {
+export function calculateFamilyScore(atomicNumbers: number[]): number {
+  const elements = getElementsFromAtomicNumbers(atomicNumbers);
   const familyCounts: Record<string, number> = {};
 
-  for (const card of cards) {
+  for (const card of elements) {
     familyCounts[card.family] = (familyCounts[card.family] || 0) + 1;
   }
 
@@ -225,22 +242,22 @@ export function calculateWordSpellingPoints(
 
 // Calculate total score for a player
 export function calculateTotalScore(
-  playerCards: ChemistryElement[],
-  leftNeighborCards: ChemistryElement[],
-  rightNeighborCards: ChemistryElement[],
+  playerAtomicNumbers: number[],
+  leftNeighborAtomicNumbers: number[],
+  rightNeighborAtomicNumbers: number[],
   wordSpellingBonus = 0,
   includeRadioactivity = true
 ): GameScore {
-  const atomicNumber = calculateAtomicNumberScore(playerCards);
+  const atomicNumber = calculateAtomicNumberScore(playerAtomicNumbers);
   const atomicMass = calculateAtomicMassScore(
-    playerCards,
-    leftNeighborCards,
-    rightNeighborCards
+    playerAtomicNumbers,
+    leftNeighborAtomicNumbers,
+    rightNeighborAtomicNumbers
   );
   const atomicSymbol = wordSpellingBonus;
-  const radioactivity = includeRadioactivity ? calculateRadioactivityScore(playerCards) : 0;
-  const ionization = calculateIonizationScore(playerCards);
-  const family = calculateFamilyScore(playerCards);
+  const radioactivity = includeRadioactivity ? calculateRadioactivityScore(playerAtomicNumbers) : 0;
+  const ionization = calculateIonizationScore(playerAtomicNumbers);
+  const family = calculateFamilyScore(playerAtomicNumbers);
 
   const total =
     atomicNumber +

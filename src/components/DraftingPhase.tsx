@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import type { GameState } from "../types";
+import type { ChemistryElement } from "../data";
 import { Card } from "./Card";
 import { FaceDownCard } from "./FaceDownCard";
 import { submitDraftSelection, checkWordSpelling } from "../firebaseService";
+import { getElementByAtomicNumber } from "../gameLogic";
 import "./DraftingPhase.scss";
 
 interface DraftingPhaseProps {
@@ -101,17 +103,21 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 					</p>
 					<div className="hand">
 						{currentPlayer.hand
-							.map((element, index) => ({ element, originalIndex: index }))
-							.sort((a, b) => a.element.atomicNumber - b.element.atomicNumber)
-							.map(({ element, originalIndex }) => (
-								<Card
-									key={`${element.atomicNumber}-${originalIndex}`}
-									element={element}
-									onClick={() => handleCardSelect(originalIndex)}
-									isSelected={selectedCardIndex === originalIndex}
-									isDisabled={isSubmitting}
-								/>
-							))}
+							.map((atomicNumber, index) => ({ atomicNumber, originalIndex: index }))
+							.sort((a, b) => a.atomicNumber - b.atomicNumber)
+							.map(({ atomicNumber, originalIndex }) => {
+								const element = getElementByAtomicNumber(atomicNumber);
+								if (!element) return null;
+								return (
+									<Card
+										key={`${atomicNumber}-${originalIndex}`}
+										element={element}
+										onClick={() => handleCardSelect(originalIndex)}
+										isSelected={selectedCardIndex === originalIndex}
+										isDisabled={isSubmitting}
+									/>
+								);
+							})}
 					</div>
 
 					{selectedCardIndex !== null && (
@@ -138,13 +144,15 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 							return a.name.localeCompare(b.name);
 						})
 						.map((player) => {
-							const revealedCards = player.draftedCards.slice(
+							const revealedAtomicNumbers = player.draftedCards.slice(
 								0,
 								game.currentRound - 1,
 							);
-							const unrevealedCards = player.draftedCards.slice(
+							const unrevealedAtomicNumbers = player.draftedCards.slice(
 								game.currentRound - 1,
 							);
+							const revealedCards = revealedAtomicNumbers.map(num => getElementByAtomicNumber(num)).filter((el): el is ChemistryElement => el !== undefined);
+							const unrevealedCards = unrevealedAtomicNumbers.map(num => getElementByAtomicNumber(num)).filter((el): el is ChemistryElement => el !== undefined);
 
 							return (
 								<div key={player.id} className="player-drafted-cards">
@@ -207,10 +215,11 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 				<div className="word-spelling-section">
 					<h3>Word Spelling Bonus</h3>
 					{(() => {
-						const revealedCards = currentPlayer.draftedCards.slice(
+						const revealedAtomicNumbers = currentPlayer.draftedCards.slice(
 							0,
 							game.currentRound - 1,
 						);
+						const revealedCards = revealedAtomicNumbers.map(num => getElementByAtomicNumber(num)).filter((el): el is ChemistryElement => el !== undefined);
 						const canSpellWords =
 							revealedCards
 								.map((c) => c.atomicSymbol.length)

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { GameState, GameScore } from '../types';
 import { Card } from './Card';
-import { calculateTotalScore, calculateWordSpellingPoints, getDeckConfig } from '../gameLogic';
+import { calculateTotalScore, calculateWordSpellingPoints, getDeckConfig, getElementByAtomicNumber } from '../gameLogic';
 import './ScoringPhase.scss';
 
 interface ScoringPhaseProps {
@@ -49,8 +49,8 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({ game, currentPlayerI
     }
     
     // Tiebreaker: highest atomic number
-    const maxAtomicA = Math.max(...a.draftedCards.map(c => c.atomicNumber), 0);
-    const maxAtomicB = Math.max(...b.draftedCards.map(c => c.atomicNumber), 0);
+    const maxAtomicA = Math.max(...a.draftedCards, 0);
+    const maxAtomicB = Math.max(...b.draftedCards, 0);
     return maxAtomicB - maxAtomicA;
   });
 
@@ -150,13 +150,17 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({ game, currentPlayerI
           <h3>Your Drafted Cards</h3>
           <div className="cards-grid">
             {currentPlayer?.draftedCards
-              .sort((a, b) => a.atomicNumber - b.atomicNumber)
-              .map((element, index) => (
-                      <Card
-                        key={`final-${element.atomicNumber}-${index}`}
-                        element={element}
-                      />
-              ))}
+              .sort((a, b) => a - b)
+              .map((atomicNumber, index) => {
+                const element = getElementByAtomicNumber(atomicNumber);
+                if (!element) return null;
+                return (
+                  <Card
+                    key={`final-${atomicNumber}-${index}`}
+                    element={element}
+                  />
+                );
+              })}
           </div>
         </div>
       </div>
