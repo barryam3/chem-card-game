@@ -152,11 +152,10 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({ game, currentPlayerI
             {currentPlayer?.draftedCards
               .sort((a, b) => a.atomicNumber - b.atomicNumber)
               .map((element, index) => (
-                <Card
-                  key={`final-${element.atomicNumber}-${index}`}
-                  element={element}
-                  showDetails={true}
-                />
+                      <Card
+                        key={`final-${element.atomicNumber}-${index}`}
+                        element={element}
+                      />
               ))}
           </div>
         </div>
