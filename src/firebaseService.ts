@@ -312,16 +312,12 @@ export async function submitDraftSelection(
     draftedCards: newDraftedCards,
   };
 
-  // Check if all players have made their selection
-  // All players should have the same hand length (one less than they started with this round)
-  // We need to check if all players have exactly one less card than they started with
-  // Find the maximum hand length among all players (this represents the round start hand length)
-  const maxHandLength = Math.max(...updatedPlayers.map((p) => p.hand.length));
-  const minHandLength = Math.min(...updatedPlayers.map((p) => p.hand.length));
-
-  // All players have selected if they all have the same hand length
-  // This includes the case where all hands are empty (maxHandLength === minHandLength === 0)
-  const allPlayersSelected = maxHandLength === minHandLength;
+  // Check if all players have made their selection for this round
+  // Each player should have at least as many drafted cards as the current round number
+  // This means everyone has drafted a card for the current round (creating an "unrevealed card")
+  const allPlayersSelected = updatedPlayers.every(
+    (player) => player.draftedCards.length >= gameData.currentRound
+  );
 
   let updatedGameData = {
     ...gameData,
