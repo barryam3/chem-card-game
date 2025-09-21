@@ -4,7 +4,7 @@ import { Lobby } from './components/Lobby';
 import { DraftingPhase } from './components/DraftingPhase';
 import { ScoringPhase } from './components/ScoringPhase';
 import type { GameState } from './types';
-import { subscribeToGame, subscribeToLobby } from './firebaseService';
+import { subscribeToGame, subscribeToLobby, cleanupOldGames } from './firebaseService';
 import { getGameIdFromUrl, getPlayerIdFromUrl, clearUrlParams } from './utils/urlUtils';
 import { saveGameState, clearGameState } from './utils/storageUtils';
 import './App.css';
@@ -19,6 +19,19 @@ function App() {
   const [playerName, setPlayerName] = useState('');
   const [game, setGame] = useState<GameState | null>(null);
   const [isRestoring, setIsRestoring] = useState(true);
+
+  // Set up periodic cleanup of old games (every 30 minutes)
+  useEffect(() => {
+    // Run cleanup immediately on app load
+    cleanupOldGames();
+    
+    // Set up interval for periodic cleanup
+    const cleanupInterval = setInterval(() => {
+      cleanupOldGames();
+    }, 30 * 60 * 1000); // 30 minutes
+    
+    return () => clearInterval(cleanupInterval);
+  }, []);
 
   // Restore game state from URL or localStorage on app load
   useEffect(() => {

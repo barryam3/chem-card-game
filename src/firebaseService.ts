@@ -6,7 +6,8 @@ import {
   getDocs, 
   onSnapshot, 
   query, 
-  where
+  where,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { GameState, LobbyState, Player } from './types';
@@ -16,10 +17,53 @@ import { dealCards, generateGameId, canSpellWord } from './gameLogic';
 const GAMES_COLLECTION = 'games';
 const LOBBIES_COLLECTION = 'lobbies';
 
+// Auto-cleanup: Delete games and lobbies older than 2 hours
+async function cleanupOldGames(): Promise<void> {
+  const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000); // 2 hours in milliseconds
+  
+  try {
+    // Clean up old lobbies
+    const oldLobbiesQuery = query(
+      collection(db, LOBBIES_COLLECTION),
+      where('createdAt', '<', twoHoursAgo)
+    );
+    const oldLobbiesSnapshot = await getDocs(oldLobbiesQuery);
+    
+    const lobbyDeletePromises = oldLobbiesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(lobbyDeletePromises);
+    
+    if (oldLobbiesSnapshot.docs.length > 0) {
+      console.log(`🧹 Cleaned up ${oldLobbiesSnapshot.docs.length} old lobbies`);
+    }
+    
+    // Clean up old games
+    const oldGamesQuery = query(
+      collection(db, GAMES_COLLECTION),
+      where('createdAt', '<', twoHoursAgo)
+    );
+    const oldGamesSnapshot = await getDocs(oldGamesQuery);
+    
+    const gameDeletePromises = oldGamesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(gameDeletePromises);
+    
+    if (oldGamesSnapshot.docs.length > 0) {
+      console.log(`🧹 Cleaned up ${oldGamesSnapshot.docs.length} old games`);
+    }
+  } catch (error) {
+    console.warn('Failed to cleanup old games:', error);
+  }
+}
+
 // Create a new game lobby
 export async function createLobby(): Promise<{ gameId: string; playerId: string }> {
+  // Clean up old games and lobbies before creating new ones
+  await cleanupOldGames();
+  
   const gameId = generateGameId();
   const hostId = Math.random().toString(36).substring(2, 15);
+  
+  // Create TTL timestamp - 2 hours from now (for future use if billing is enabled)
+  const ttlTimestamp = Timestamp.fromDate(new Date(Date.now() + 2 * 60 * 60 * 1000));
   
   const lobbyData: LobbyState = {
     id: gameId,
@@ -29,7 +73,8 @@ export async function createLobby(): Promise<{ gameId: string; playerId: string 
       isHost: true
     }],
     hostId,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    ttl: ttlTimestamp // TTL field for future use
   };
   
   await addDoc(collection(db, LOBBIES_COLLECTION), lobbyData);
@@ -126,6 +171,9 @@ export async function startGame(gameId: string): Promise<boolean> {
   const hands = dealCards(lobbyData.players.length);
   const totalRounds = hands[0].length;
   
+  // Create TTL timestamp - 2 hours from now
+  const ttlTimestamp = Timestamp.fromDate(new Date(Date.now() + 2 * 60 * 60 * 1000));
+  
   // Create game state
   const gameState: GameState = {
     id: gameId,
@@ -140,7 +188,8 @@ export async function startGame(gameId: string): Promise<boolean> {
     totalRounds,
     wordSpellingWinners: [],
     createdAt: Date.now(),
-    hostId: lobbyData.hostId
+    hostId: lobbyData.hostId,
+    ttl: ttlTimestamp // Firestore TTL field - auto-delete after 2 hours
   };
   
   // Add game to games collection
@@ -350,3 +399,6 @@ export async function checkWordSpelling(gameId: string, playerId: string, word: 
   
   return true;
 }
+
+// Export cleanup function for manual cleanup
+export { cleanupOldGames };
