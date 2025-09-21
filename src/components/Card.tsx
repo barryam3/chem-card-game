@@ -16,7 +16,8 @@ export const Card: React.FC<CardProps> = ({
   showDetails = true 
 }) => {
   const getImagePath = (atomicNumber: number, name: string) => {
-    return `/src/assets/${atomicNumber}-${name}.png`;
+    // Use Vite's asset resolution - it will automatically handle the correct path
+    return new URL(`../assets/${atomicNumber}-${name}.png`, import.meta.url).href;
   };
 
   const getFamilyColor = (family: string) => {
