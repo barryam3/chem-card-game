@@ -13,7 +13,6 @@ import { db } from './firebase';
 import type { GameState, LobbyState, Player } from './types';
 import { gameData } from './data';
 import { dealCards, generateGameId, canSpellWord } from './gameLogic';
-import { checkRateLimit } from './rateLimiter';
 import { trackUsage } from './monitoring';
 
 const GAMES_COLLECTION = 'games';
@@ -58,12 +57,6 @@ async function cleanupOldGames(): Promise<void> {
 
 // Create a new game lobby
 export async function createLobby(): Promise<{ gameId: string; playerId: string }> {
-  // Check rate limit
-  const rateLimitCheck = checkRateLimit('CREATE_LOBBY');
-  if (!rateLimitCheck.allowed) {
-    throw new Error(rateLimitCheck.message || 'Rate limit exceeded');
-  }
-  
   // Clean up old games and lobbies before creating new ones
   await cleanupOldGames();
   
@@ -95,11 +88,6 @@ export async function createLobby(): Promise<{ gameId: string; playerId: string 
 
 // Join an existing lobby
 export async function joinLobby(gameId: string): Promise<{ success: boolean; playerId?: string }> {
-  // Check rate limit
-  const rateLimitCheck = checkRateLimit('JOIN_LOBBY');
-  if (!rateLimitCheck.allowed) {
-    throw new Error(rateLimitCheck.message || 'Rate limit exceeded');
-  }
   const lobbiesQuery = query(
     collection(db, LOBBIES_COLLECTION),
     where('id', '==', gameId)
@@ -134,12 +122,6 @@ export async function joinLobby(gameId: string): Promise<{ success: boolean; pla
 
 // Update player name in lobby
 export async function updatePlayerName(gameId: string, playerId: string, newName: string): Promise<boolean> {
-  // Check rate limit
-  const rateLimitCheck = checkRateLimit('UPDATE_PLAYER_NAME');
-  if (!rateLimitCheck.allowed) {
-    throw new Error(rateLimitCheck.message || 'Rate limit exceeded');
-  }
-  
   // Validate player name length
   if (!newName || newName.length > 50) {
     throw new Error('Player name must be between 1 and 50 characters');
@@ -272,11 +254,6 @@ export function subscribeToGame(gameId: string, callback: (game: GameState | nul
 
 // Submit draft selection
 export async function submitDraftSelection(gameId: string, playerId: string, cardIndex: number): Promise<boolean> {
-  // Check rate limit
-  const rateLimitCheck = checkRateLimit('SUBMIT_DRAFT');
-  if (!rateLimitCheck.allowed) {
-    throw new Error(rateLimitCheck.message || 'Rate limit exceeded');
-  }
   const gamesQuery = query(
     collection(db, GAMES_COLLECTION),
     where('id', '==', gameId)
@@ -384,12 +361,6 @@ export async function submitDraftSelection(gameId: string, playerId: string, car
 
 // Check for word spelling and update winners
 export async function checkWordSpelling(gameId: string, playerId: string, word: string): Promise<boolean> {
-  // Check rate limit
-  const rateLimitCheck = checkRateLimit('SPELL_WORD');
-  if (!rateLimitCheck.allowed) {
-    throw new Error(rateLimitCheck.message || 'Rate limit exceeded');
-  }
-  
   // Validate word length and format
   if (!word || word.length !== 5 || !/^[A-Za-z]+$/.test(word)) {
     throw new Error('Word must be exactly 5 letters and contain only alphabetic characters');
