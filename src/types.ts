@@ -1,4 +1,5 @@
 import type { ChemistryElement } from './data';
+import type { Timestamp } from 'firebase/firestore';
 
 export type GamePhase = 'lobby' | 'drafting' | 'scoring' | 'finished';
 
@@ -26,6 +27,7 @@ export interface GameState {
   wordSpellingWinners: WordSpellingWinner[]; // Players who have spelled 5-letter words with round info
   createdAt: number;
   hostId: string;
+  ttl?: Timestamp; // TTL field for automatic deletion after 2 hours
 }
 
 export interface LobbyState {
@@ -33,6 +35,7 @@ export interface LobbyState {
   players: Omit<Player, 'draftedCards' | 'hand' | 'score'>[];
   hostId: string;
   createdAt: number;
+  ttl?: Timestamp; // TTL field for automatic deletion after 2 hours
 }
 
 export interface DraftSelection {
