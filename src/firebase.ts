@@ -1,5 +1,5 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { initializeApp } from "firebase/app";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 // Development Firebase configuration (demo project for emulator)
 const devFirebaseConfig = {
@@ -8,7 +8,7 @@ const devFirebaseConfig = {
   projectId: "demo-chem-card-game",
   storageBucket: "demo-project.appspot.com",
   messagingSenderId: "123456789",
-  appId: "demo-app-id"
+  appId: "demo-app-id",
 };
 
 // Production Firebase configuration
@@ -19,11 +19,13 @@ const prodFirebaseConfig = {
   storageBucket: "chem-card-game.firebasestorage.app",
   messagingSenderId: "484362725443",
   appId: "1:484362725443:web:3274afc3c009e271b8ccf6",
-  measurementId: "G-099MXETX8X"
+  measurementId: "G-099MXETX8X",
 };
 
 // Use appropriate config based on environment
-const firebaseConfig = import.meta.env.DEV ? devFirebaseConfig : prodFirebaseConfig;
+const firebaseConfig = import.meta.env.DEV
+  ? devFirebaseConfig
+  : prodFirebaseConfig;
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -34,15 +36,14 @@ export const db = getFirestore(app);
 // Connect to emulator in development
 if (import.meta.env.DEV) {
   try {
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    console.log('🔥 Connected to Firestore emulator (development mode)');
-    console.log('📍 Using demo project:', firebaseConfig.projectId);
+    connectFirestoreEmulator(db, "localhost", 8080);
   } catch (error) {
-    console.warn('⚠️ Could not connect to Firestore emulator:', error instanceof Error ? error.message : String(error));
-    console.warn('Make sure to run: npm run dev:emulator');
+    console.warn(
+      "⚠️ Could not connect to Firestore emulator:",
+      error instanceof Error ? error.message : String(error)
+    );
+    console.warn("Make sure to run: npm run dev:emulator");
   }
-} else {
-  console.log('🌐 Connected to production Firebase');
 }
 
 export default app;

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { GameState } from "../types";
 import { Card } from "./Card";
 import { submitDraftSelection, checkWordSpelling } from "../firebaseService";
-import './DraftingPhase.scss';
+import "./DraftingPhase.scss";
 
 interface DraftingPhaseProps {
 	game: GameState;
@@ -31,21 +31,6 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 		setIsSubmitting(false);
 		setSelectedCardIndex(null);
 	}, [game.currentRound, game.phase]);
-
-	// Debug logging for game state
-	useEffect(() => {
-		console.log("DraftingPhase game state:", {
-			currentRound: game.currentRound,
-			totalRounds: game.totalRounds,
-			phase: game.phase,
-			players: game.players.map((p) => ({
-				id: p.id,
-				name: p.name,
-				handLength: p.hand.length,
-				draftedCount: p.draftedCards.length,
-			})),
-		});
-	}, [game]);
 
 	const handleCardSelect = (index: number) => {
 		setSelectedCardIndex(index);
@@ -115,7 +100,8 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 				<div className="hand-section">
 					<h3>Your Hand - Select a card to draft:</h3>
 					<p className="drafting-info">
-						After all players select a card, hands will be passed to the next player.
+						After all players select a card, hands will be passed to the next
+						player.
 					</p>
 					<div className="hand">
 						{currentPlayer.hand
@@ -321,41 +307,6 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 						</div>
 					)}
 				</div>
-
-				<div className="players-status">
-					<h3>Players Status:</h3>
-					<div className="players-list">
-						{game.players.map((player) => (
-							<div key={player.id} className="player-status">
-								<span className="player-name">{player.name}</span>
-								<span className="status">
-									{player.id === currentPlayerId
-										? "You"
-										: player.hand.length === minHandLength
-											? "Ready"
-											: "Selecting..."}
-								</span>
-								<span className="drafted-count">
-									({player.draftedCards.length} drafted)
-								</span>
-							</div>
-						))}
-					</div>
-				</div>
-
-				{allPlayersReady && (
-					<div className="round-complete">
-						{maxHandLength === 0 ? (
-							<p>
-								All cards have been drafted! Moving to scoring phase...
-							</p>
-						) : (
-							<p>
-								All players have made their selections. Moving to next round...
-							</p>
-						)}
-					</div>
-				)}
 			</div>
 		</div>
 	);
