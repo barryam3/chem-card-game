@@ -160,23 +160,27 @@
       font-weight: $font-weight-semibold;
     }
 
-    .drafted-cards.unrevealed {
-      opacity: 0.6;
-      position: relative;
+    .unrevealed-cards {
+      display: contents; // Allow cards to flow naturally with revealed cards
+      
+      .card {
+        opacity: 0.6;
+        position: relative;
 
-      &::after {
-        content: "This Round";
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: $bg-overlay;
-        color: $text-white;
-        padding: $spacing-xs $spacing-sm;
-        border-radius: 4px;
-        font-size: $font-size-sm;
-        pointer-events: none;
-        z-index: 1;
+        &::after {
+          content: "This Round";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: $bg-overlay;
+          color: $text-white;
+          padding: $spacing-xs $spacing-sm;
+          border-radius: 4px;
+          font-size: $font-size-sm;
+          pointer-events: none;
+          z-index: 1;
+        }
       }
     }
   }
