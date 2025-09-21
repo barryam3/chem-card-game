@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type { GameState } from "../types";
 import { Card } from "./Card";
 import { submitDraftSelection, checkWordSpelling } from "../firebaseService";
+import './DraftingPhase.scss';
 
 interface DraftingPhaseProps {
 	game: GameState;

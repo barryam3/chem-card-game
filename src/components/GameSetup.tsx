@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createLobby, joinLobby } from '../firebaseService';
 import { getGameIdFromUrl, setGameIdInUrl, setPlayerIdInUrl } from '../utils/urlUtils';
+import './GameSetup.scss';
 
 interface GameSetupProps {
   onJoinLobby: (gameId: string, playerId: string, isHost: boolean, playerName: string) => void;

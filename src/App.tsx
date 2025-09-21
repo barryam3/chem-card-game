@@ -7,7 +7,7 @@ import type { GameState } from './types';
 import { subscribeToGame, subscribeToLobby, cleanupOldGames } from './firebaseService';
 import { getGameIdFromUrl, getPlayerIdFromUrl, clearUrlParams } from './utils/urlUtils';
 import { saveGameState, clearGameState } from './utils/storageUtils';
-import './App.css';
+import './App.scss';
 
 type AppState = 'setup' | 'lobby' | 'game';
 

@@ -1,0 +1,84 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.game-setup {
+  @include card-base;
+  max-width: 600px;
+  width: 100%;
+  @include fade-in;
+
+  .setup-header {
+    text-align: center;
+    margin-bottom: $spacing-xl;
+
+    h1 {
+      color: $text-primary;
+      margin-bottom: $spacing-sm;
+    }
+
+    p {
+      color: $text-secondary;
+      margin: 0;
+    }
+  }
+
+  .setup-form {
+    @include flex-column;
+    gap: $spacing-xl;
+  }
+
+  .input-group {
+    @include flex-column;
+    gap: $spacing-sm;
+
+    label {
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+
+    input {
+      @include input-base;
+    }
+  }
+
+  .setup-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-xl;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .create-section, .join-section {
+    @include flex-column;
+    gap: $spacing-md;
+    padding: $spacing-lg;
+    border: 2px solid $border-color;
+    border-radius: $border-radius-lg;
+    text-align: center;
+
+    h3 {
+      margin: 0;
+      color: $text-primary;
+    }
+  }
+
+  .create-btn {
+    @include button-primary;
+  }
+
+  .join-btn {
+    @include button-secondary;
+  }
+
+  .error-message {
+    background: #fee;
+    color: #c33;
+    padding: $spacing-md;
+    border-radius: $border-radius-md;
+    border: 1px solid #fcc;
+    text-align: center;
+  }
+}

@@ -1,0 +1,105 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.card {
+  background: $bg-primary;
+  border: 3px solid $border-color;
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  width: 120px;
+  height: 160px;
+  @include flex-column;
+  cursor: pointer;
+  transition: all $transition-normal;
+  box-shadow: $shadow-sm;
+  font-family: inherit;
+
+  &:hover:not(.disabled) {
+    @include card-hover;
+  }
+
+  &.selected {
+    border-color: $primary-color;
+    box-shadow: $shadow-focus;
+  }
+
+  &.disabled, &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .card-header {
+    @include flex-between;
+    margin-bottom: $spacing-sm;
+  }
+
+  .atomic-number {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    font-weight: $font-weight-semibold;
+  }
+
+  .atomic-symbol {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+  }
+
+  .card-image {
+    flex: 1;
+    @include flex-center;
+    margin: $spacing-sm 0;
+
+    img {
+      max-width: 60px;
+      max-height: 60px;
+      object-fit: contain;
+    }
+  }
+
+  .card-name {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    text-align: center;
+    margin-bottom: $spacing-sm;
+  }
+
+  .card-details {
+    font-size: $font-size-xs;
+    color: $text-secondary;
+
+    .mass-group {
+      margin-bottom: $spacing-xs;
+    }
+
+    .family {
+      padding: 0.2rem 0.4rem;
+      border-radius: $border-radius-sm;
+      text-align: center;
+      margin-bottom: $spacing-xs;
+      font-weight: $font-weight-semibold;
+      color: $text-white;
+      @include text-shadow;
+    }
+
+    .radioactive {
+      color: $secondary-color;
+      font-weight: $font-weight-semibold;
+      text-align: center;
+    }
+
+    .ion {
+      text-align: center;
+      font-weight: $font-weight-semibold;
+
+      &.positive {
+        color: $primary-color;
+      }
+
+      &.negative {
+        color: $secondary-color;
+      }
+    }
+  }
+}

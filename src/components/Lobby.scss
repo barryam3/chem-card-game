@@ -1,0 +1,166 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+@use 'sass:color';
+
+.lobby-container {
+  @include card-base;
+  max-width: 600px;
+  width: 100%;
+  @include fade-in;
+
+  .lobby-header {
+    text-align: center;
+    margin-bottom: $spacing-xl;
+
+    h2 {
+      color: $text-primary;
+      margin-bottom: $spacing-sm;
+    }
+  }
+
+  .game-id {
+    color: $text-secondary;
+    font-size: $font-size-lg;
+    margin-bottom: $spacing-md;
+  }
+
+  .copy-url-btn {
+    @include button-success;
+  }
+
+  .players-list {
+    margin-bottom: $spacing-xl;
+
+    h3 {
+      color: $text-primary;
+      margin-bottom: $spacing-md;
+    }
+  }
+
+  .players {
+    @include flex-column;
+    gap: $spacing-sm;
+  }
+
+  .player {
+    @include flex-between;
+    padding: $spacing-md;
+    background: $bg-secondary;
+    border-radius: $border-radius-md;
+    border-left: 4px solid $primary-color;
+
+    &.host {
+      border-left-color: $secondary-color;
+    }
+
+    &.current {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border-left-color: $primary-color;
+    }
+  }
+
+  .player-name {
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+  }
+
+  .host-badge {
+    @include badge-secondary;
+  }
+
+  .you-badge {
+    @include badge-primary;
+  }
+
+  .lobby-actions {
+    text-align: center;
+  }
+
+  .start-game-btn {
+    @include button-primary;
+    font-size: $font-size-lg;
+    margin-bottom: $spacing-md;
+  }
+
+  .start-hint {
+    color: $text-secondary;
+    margin: 0;
+  }
+
+  .waiting-message {
+    text-align: center;
+    color: $text-secondary;
+    font-style: italic;
+  }
+}
+
+/* Player Name Section */
+.player-name-section {
+  margin-bottom: $spacing-xl;
+  padding: $spacing-lg;
+  background: $bg-secondary;
+  border-radius: $border-radius-lg;
+
+  h3 {
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+  }
+
+  .name-display {
+    @include flex-center;
+    gap: $spacing-md;
+    justify-content: flex-start;
+  }
+
+  .current-name {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+  }
+
+  .edit-btn {
+    @include button-small;
+    background: $primary-color;
+    color: $text-white;
+
+    &:hover {
+      background: color.adjust($primary-color, $lightness: -10%);
+      transform: translateY(-1px);
+    }
+  }
+
+  .name-edit {
+    @include flex-center;
+    gap: $spacing-sm;
+    justify-content: flex-start;
+
+    input {
+      flex: 1;
+      @include input-base;
+      padding: $spacing-sm;
+    }
+  }
+
+  .save-btn, .cancel-btn {
+    @include button-small;
+    padding: $spacing-sm $spacing-md;
+  }
+
+  .save-btn {
+    background: $success-color;
+    color: $text-white;
+
+    &:hover {
+      background: color.adjust($success-color, $lightness: -10%);
+    }
+  }
+
+  .cancel-btn {
+    background: #6c757d;
+    color: $text-white;
+
+    &:hover {
+      background: color.adjust(#6c757d, $lightness: -10%);
+    }
+  }
+}

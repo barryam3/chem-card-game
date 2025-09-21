@@ -1,0 +1,86 @@
+@use './styles/variables' as *;
+@use './styles/mixins' as *;
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: $font-family-primary;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: $background-gradient;
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+  @include flex-column;
+}
+
+/* Header Styles */
+.app-header {
+  background: $bg-light;
+  backdrop-filter: blur(10px);
+  padding: $spacing-md $spacing-xl;
+  border-bottom: 1px solid $border-light;
+
+  h1 {
+    margin: 0;
+    color: $text-white;
+    font-size: $font-size-xxl;
+    text-align: center;
+  }
+}
+
+.game-info {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: $font-size-sm;
+  margin-top: $spacing-sm;
+}
+
+.app-main {
+  flex: 1;
+  padding: $spacing-xl;
+  @include flex-center;
+  align-items: flex-start;
+}
+
+/* Loading and Utility Styles */
+.loading {
+  text-align: center;
+  color: $text-primary;
+  font-size: $font-size-xl;
+  padding: $spacing-xl;
+  background: $bg-primary;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  margin: $spacing-xl;
+}
+
+.game-finished {
+  @include card-base;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+
+  h2 {
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+  }
+
+  button {
+    @include button-primary;
+    margin-top: $spacing-md;
+  }
+}
+
+/* Responsive Design */
+@include mobile {
+  .app-main {
+    padding: $spacing-md;
+  }
+}
