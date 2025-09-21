@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"firebase emulators:start --only firestore\" \"vite\"",
+    "dev": "concurrently \"npm run dev:emulator\" \"npm run dev:app\"",
     "dev:app": "vite",
-    "dev:emulator": "firebase emulators:start --only firestore",
+    "dev:emulator": "firebase emulators:start --only firestore,ui",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

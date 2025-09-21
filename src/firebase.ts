@@ -1,8 +1,18 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
-// Firebase configuration - Production
-const firebaseConfig = {
+// Development Firebase configuration (demo project for emulator)
+const devFirebaseConfig = {
+  apiKey: "demo-api-key",
+  authDomain: "demo-project.firebaseapp.com",
+  projectId: "demo-chem-card-game",
+  storageBucket: "demo-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "demo-app-id"
+};
+
+// Production Firebase configuration
+const prodFirebaseConfig = {
   apiKey: "AIzaSyAxeBAxKalFCIl6Buut5y5eG7Kee47mENs",
   authDomain: "chem-card-game.firebaseapp.com",
   projectId: "chem-card-game",
@@ -11,6 +21,9 @@ const firebaseConfig = {
   appId: "1:484362725443:web:3274afc3c009e271b8ccf6",
   measurementId: "G-099MXETX8X"
 };
+
+// Use appropriate config based on environment
+const firebaseConfig = import.meta.env.DEV ? devFirebaseConfig : prodFirebaseConfig;
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -22,10 +35,14 @@ export const db = getFirestore(app);
 if (import.meta.env.DEV) {
   try {
     connectFirestoreEmulator(db, 'localhost', 8080);
-    console.log('🔥 Connected to Firestore emulator');
+    console.log('🔥 Connected to Firestore emulator (development mode)');
+    console.log('📍 Using demo project:', firebaseConfig.projectId);
   } catch (error) {
-    console.log('Firestore emulator already connected or not available');
+    console.warn('⚠️ Could not connect to Firestore emulator:', error instanceof Error ? error.message : String(error));
+    console.warn('Make sure to run: npm run dev:emulator');
   }
+} else {
+  console.log('🌐 Connected to production Firebase');
 }
 
 export default app;
