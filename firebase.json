@@ -4,10 +4,12 @@
   },
   "emulators": {
     "firestore": {
-      "port": 8080
+      "port": 8080,
+      "rules": "firestore-dev.rules"
     },
     "ui": {
-      "enabled": true
+      "enabled": true,
+      "port": 4000
     },
     "singleProjectMode": true
   }
