@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { GameState } from "../types";
 import { Card } from "./Card";
+import { FaceDownCard } from "./FaceDownCard";
 import { submitDraftSelection, checkWordSpelling } from "../firebaseService";
 import "./DraftingPhase.scss";
 
@@ -25,7 +26,7 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 	useEffect(() => {
 		setIsSubmitting(false);
 		setSelectedCardIndex(null);
-	}, [game.currentRound, game.phase]);
+	}, [game.currentRound]);
 
 	const currentPlayer = game.players.find((p) => p.id === currentPlayerId);
 	if (!currentPlayer) {
@@ -121,7 +122,7 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 								disabled={isSubmitting}
 								className="submit-selection-btn"
 							>
-								{isSubmitting ? "Submitting..." : "Draft This Card"}
+								{isSubmitting ? "Waiting for others..." : "Draft This Card"}
 							</button>
 						</div>
 					)}
@@ -150,14 +151,14 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 									<h4
 										className={`player-name ${player.id === currentPlayerId ? "current-player" : ""}`}
 									>
-										{player.name} ({player.draftedCards.length} cards)
+										{player.name}
 										{player.id === currentPlayerId && " (You)"}
 									</h4>
 
-									{revealedCards.length > 0 && (
+									{(revealedCards.length > 0 || unrevealedCards.length > 0) && (
 										<div className="card-group">
-											<h5>Revealed Cards ({revealedCards.length}):</h5>
 											<div className="drafted-cards">
+												{/* Show revealed cards first */}
 												{revealedCards
 													.sort((a, b) => a.atomicNumber - b.atomicNumber)
 													.map((element, index) => (
@@ -166,21 +167,30 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 															element={element}
 														/>
 													))}
-											</div>
-										</div>
-									)}
 
-									{unrevealedCards.length > 0 && (
-										<div className="card-group">
-											<h5>This Round's Cards ({unrevealedCards.length}):</h5>
-											<div className="drafted-cards unrevealed">
-												{unrevealedCards
-													.sort((a, b) => a.atomicNumber - b.atomicNumber)
-													.map((element, index) => (
-														<Card
-															key={`${player.id}-unrevealed-${element.atomicNumber}-${index}`}
-															element={element}
-														/>
+												{/* Show unrevealed cards for current player, face-down cards for others */}
+												{unrevealedCards.length > 0 &&
+													(player.id === currentPlayerId ? (
+														// Current player: show actual unrevealed cards with dimmed styling
+														<div className="unrevealed-cards">
+															{unrevealedCards
+																.sort((a, b) => a.atomicNumber - b.atomicNumber)
+																.map((element, index) => (
+																	<Card
+																		key={`${player.id}-unrevealed-${element.atomicNumber}-${index}`}
+																		element={element}
+																	/>
+																))}
+														</div>
+													) : (
+														// Other players: show face-down cards
+														Array.from({ length: unrevealedCards.length }).map(
+															(_, index) => (
+																<FaceDownCard
+																	key={`${player.id}-facedown-${index}`}
+																/>
+															),
+														)
 													))}
 											</div>
 										</div>

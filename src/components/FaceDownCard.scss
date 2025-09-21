@@ -1,0 +1,42 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.face-down-card {
+  @include card-base;
+  
+  // Match Card component dimensions
+  width: 120px;
+  height: 168px;
+  
+  // Gray background for face-down appearance
+  background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%);
+  border: 3px solid #b0b0b0;
+  
+  // Center the question mark
+  @include flex-center;
+  
+  .question-mark {
+    font-size: 48px;
+    font-weight: $font-weight-bold;
+    color: #808080;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  // Remove hover effects for face-down cards
+  &:hover {
+    transform: none;
+    box-shadow: $shadow-sm;
+  }
+}
+
+// Responsive adjustments to match Card component
+@include mobile {
+  .face-down-card {
+    width: 100px;
+    height: 140px;
+    
+    .question-mark {
+      font-size: 36px;
+    }
+  }
+}
