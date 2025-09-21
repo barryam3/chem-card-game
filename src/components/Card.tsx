@@ -1,4 +1,5 @@
 import type { ChemistryElement } from "../data";
+import './Card.scss';
 
 interface CardProps {
 	element: ChemistryElement;

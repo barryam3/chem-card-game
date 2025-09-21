@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { GameState, GameScore } from '../types';
 import { Card } from './Card';
 import { calculateTotalScore, calculateWordSpellingPoints, getDeckConfig } from '../gameLogic';
+import './ScoringPhase.scss';
 
 interface ScoringPhaseProps {
   game: GameState;

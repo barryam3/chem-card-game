@@ -7,6 +7,7 @@ import {
 } from "../firebaseService";
 import { getGameUrl } from "../utils/urlUtils";
 import { savePlayerName } from "../utils/storageUtils";
+import './Lobby.scss';
 
 interface LobbyProps {
 	gameId: string;

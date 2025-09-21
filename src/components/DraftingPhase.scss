@@ -1,0 +1,263 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.drafting-phase {
+  @include card-base;
+  max-width: 1200px;
+  width: 100%;
+  @include fade-in;
+
+  .drafting-header {
+    text-align: center;
+    margin-bottom: $spacing-xl;
+
+    h2 {
+      color: $text-primary;
+      margin-bottom: $spacing-sm;
+    }
+
+    .round-info {
+      color: $text-secondary;
+      font-size: $font-size-lg;
+    }
+  }
+
+  .drafting-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: $spacing-xl;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .hand-section {
+    grid-column: 1 / -1;
+
+    h3 {
+      color: $text-primary;
+      margin-bottom: $spacing-md;
+    }
+  }
+
+  .hand {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+
+    @include mobile {
+      justify-content: center;
+    }
+  }
+
+  .selection-actions {
+    text-align: center;
+  }
+
+  .submit-selection-btn {
+    @include button-primary;
+  }
+
+  .drafted-cards-section h3 {
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+  }
+
+  .drafted-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+  }
+
+  .player-drafted-cards {
+    margin-bottom: $spacing-lg;
+    padding: $spacing-md;
+    background: $bg-secondary;
+    border-radius: $border-radius-md;
+    border-left: 4px solid $primary-color;
+
+    h4 {
+      margin: 0 0 $spacing-sm 0;
+      color: $text-primary;
+      font-size: $font-size-md;
+
+      &.current-player {
+        color: $primary-color;
+        font-weight: $font-weight-semibold;
+      }
+    }
+  }
+
+  .no-cards {
+    color: $text-secondary;
+    font-style: italic;
+    padding: $spacing-md;
+    text-align: center;
+  }
+
+  .players-status {
+    grid-column: 1 / -1;
+
+    h3 {
+      color: $text-primary;
+      margin-bottom: $spacing-md;
+    }
+
+    .players-list {
+      @include flex-column;
+      gap: $spacing-sm;
+    }
+
+    .player-status {
+      @include flex-between;
+      padding: $spacing-sm;
+      background: $bg-secondary;
+      border-radius: $border-radius-sm;
+    }
+
+    .player-name {
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+
+    .status {
+      color: $text-secondary;
+      font-style: italic;
+    }
+
+    .drafted-count {
+      color: $primary-color;
+      font-weight: $font-weight-semibold;
+    }
+  }
+
+  .round-complete {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: $spacing-md;
+    background: #e8f5e8;
+    border-radius: $border-radius-md;
+    color: #2d5a2d;
+    font-weight: $font-weight-semibold;
+  }
+
+  .drafting-info {
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    margin-bottom: $spacing-md;
+    font-style: italic;
+  }
+
+  .card-group {
+    margin-bottom: $spacing-md;
+
+    h5 {
+      margin: $spacing-sm 0;
+      font-size: $font-size-sm;
+      color: $text-secondary;
+      font-weight: $font-weight-semibold;
+    }
+
+    .drafted-cards.unrevealed {
+      opacity: 0.6;
+      position: relative;
+
+      &::after {
+        content: "This Round";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: $bg-overlay;
+        color: $text-white;
+        padding: $spacing-xs $spacing-sm;
+        border-radius: 4px;
+        font-size: $font-size-sm;
+        pointer-events: none;
+        z-index: 1;
+      }
+    }
+  }
+}
+
+/* Word Spelling Section */
+.word-spelling-section {
+  margin-bottom: $spacing-xl;
+  padding: $spacing-lg;
+  background: $bg-secondary;
+  border-radius: $border-radius-lg;
+
+  h3 {
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+  }
+
+  .word-form {
+    @include flex-column;
+    gap: $spacing-md;
+  }
+
+  .word-input-group {
+    display: flex;
+    gap: $spacing-md;
+    align-items: center;
+
+    input {
+      flex: 1;
+      @include input-base;
+      padding: $spacing-sm;
+      text-transform: uppercase;
+    }
+
+    button {
+      @include button-primary;
+      padding: $spacing-sm $spacing-lg;
+    }
+  }
+
+  .word-error {
+    color: $danger-color;
+    font-size: $font-size-sm;
+    margin-top: $spacing-sm;
+    padding: $spacing-sm;
+    background: rgba(245, 87, 108, 0.1);
+    border-radius: $border-radius-sm;
+    border-left: 4px solid $danger-color;
+  }
+
+  .word-success {
+    color: $success-color;
+    font-size: $font-size-sm;
+    margin-bottom: $spacing-md;
+    padding: $spacing-sm;
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: $border-radius-sm;
+    border-left: 4px solid $success-color;
+    font-weight: $font-weight-semibold;
+  }
+
+  .word-info {
+    color: #6c757d;
+    font-size: $font-size-sm;
+    margin-bottom: $spacing-md;
+    padding: $spacing-sm;
+    background: rgba(108, 117, 125, 0.1);
+    border-radius: $border-radius-sm;
+    border-left: 4px solid #6c757d;
+  }
+
+  .word-winners {
+    margin-top: $spacing-md;
+
+    .word-winner {
+      padding: $spacing-sm;
+      background: #e8f5e8;
+      border-radius: $border-radius-sm;
+      margin-bottom: $spacing-sm;
+      color: #2d5a2d;
+      font-weight: $font-weight-semibold;
+    }
+  }
+}

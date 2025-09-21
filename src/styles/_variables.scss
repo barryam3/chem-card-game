@@ -1,0 +1,74 @@
+// Color Variables
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+$success-gradient: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+$background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+$primary-color: #667eea;
+$secondary-color: #f5576c;
+$success-color: #28a745;
+$warning-color: #ffc107;
+$danger-color: #f5576c;
+$info-color: #4ECDC4;
+
+$text-primary: #333;
+$text-secondary: #666;
+$text-muted: #999;
+$text-white: white;
+
+$bg-primary: white;
+$bg-secondary: #f8f9fa;
+$bg-light: rgba(255, 255, 255, 0.1);
+$bg-overlay: rgba(0, 0, 0, 0.8);
+
+$border-color: #e1e5e9;
+$border-light: rgba(255, 255, 255, 0.2);
+
+// Spacing Variables
+$spacing-xs: 0.25rem;
+$spacing-sm: 0.5rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 2rem;
+$spacing-xxl: 3rem;
+
+// Border Radius
+$border-radius-sm: 8px;
+$border-radius-md: 10px;
+$border-radius-lg: 15px;
+$border-radius-xl: 20px;
+
+// Shadows
+$shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 8px 16px rgba(0, 0, 0, 0.2);
+$shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+$shadow-focus: 0 0 0 3px rgba(102, 126, 234, 0.3);
+
+// Typography
+$font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+$font-size-xs: 0.6rem;
+$font-size-sm: 0.8rem;
+$font-size-md: 1rem;
+$font-size-lg: 1.1rem;
+$font-size-xl: 1.2rem;
+$font-size-xxl: 2rem;
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// Transitions
+$transition-fast: 0.15s ease;
+$transition-normal: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// Breakpoints
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 1024px;
+$breakpoint-desktop: 1200px;
+
+// Z-index
+$z-index-dropdown: 1000;
+$z-index-modal: 1050;
+$z-index-tooltip: 1100;
