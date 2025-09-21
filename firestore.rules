@@ -1,14 +1,84 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to lobbies and games collections
-    // This is still permissive but scoped to game data only
-    match /lobbies/{lobbyId} {
-      allow read, write: if true;
+    
+    // Helper functions for validation
+    function isValidGameId(gameId) {
+      return gameId is string && gameId.size() == 6 && gameId.matches('[A-Z0-9]+');
     }
     
+    function isValidPlayerName(name) {
+      return name is string && name.size() >= 1 && name.size() <= 50;
+    }
+    
+    function isRecentTimestamp(ts) {
+      return ts is number && 
+             ts > (request.time.toMillis() - 60000) && // Not older than 1 minute
+             ts <= request.time.toMillis(); // Not in future
+    }
+    
+    function isValidLobbyData(data) {
+      return data.keys().hasAll(['id', 'players', 'hostId', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'players', 'hostId', 'createdAt', 'ttl']) &&
+             isValidGameId(data.id) &&
+             data.players is list &&
+             data.players.size() >= 1 && data.players.size() <= 8 && // Max 8 players
+             data.hostId is string &&
+             isRecentTimestamp(data.createdAt);
+    }
+    
+    function isValidGameData(data) {
+      return data.keys().hasAll(['id', 'phase', 'players', 'currentRound', 'totalRounds', 'createdAt', 'hostId']) &&
+             data.phase in ['drafting', 'scoring'] &&
+             data.players is list &&
+             data.players.size() >= 2 && data.players.size() <= 8 &&
+             data.currentRound is number && data.currentRound >= 1 && data.currentRound <= 50 &&
+             data.totalRounds is number && data.totalRounds >= 1 && data.totalRounds <= 50 &&
+             isRecentTimestamp(data.createdAt);
+    }
+    
+    // Lobbies collection - restricted access
+    match /lobbies/{lobbyId} {
+      // Allow reading any lobby (needed for joining)
+      allow read: if isValidGameId(lobbyId);
+      
+      // Allow creating new lobbies with validation
+      allow create: if isValidGameId(lobbyId) &&
+                   isValidLobbyData(resource.data) &&
+                   resource.data.id == lobbyId;
+      
+      // Allow updates only to add players or update names
+      allow update: if isValidGameId(lobbyId) &&
+                   isValidLobbyData(resource.data) &&
+                   resource.data.id == lobbyId &&
+                   // Only allow adding players or updating player names
+                   (resource.data.players.size() > request.resource.data.players.size() ||
+                    resource.data.diff(request.resource.data).affectedKeys().hasOnly(['players']));
+      
+      // Allow deletion (when game starts)
+      allow delete: if isValidGameId(lobbyId);
+    }
+    
+    // Games collection - restricted access  
     match /games/{gameId} {
-      allow read, write: if true;
+      // Allow reading games
+      allow read: if isValidGameId(gameId);
+      
+      // Allow creating games with validation
+      allow create: if isValidGameId(gameId) &&
+                   isValidGameData(resource.data) &&
+                   resource.data.id == gameId;
+      
+      // Allow updates for game progression
+      allow update: if isValidGameId(gameId) &&
+                   isValidGameData(resource.data) &&
+                   resource.data.id == gameId &&
+                   // Prevent tampering with core game data
+                   resource.data.diff(request.resource.data).affectedKeys()
+                     .hasOnly(['players', 'currentRound', 'phase', 'wordSpellingWinners']);
+      
+      // Allow deletion (for cleanup)
+      allow delete: if isValidGameId(gameId);
     }
     
     // Deny access to all other collections
