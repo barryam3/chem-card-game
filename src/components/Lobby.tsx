@@ -16,6 +16,7 @@ interface LobbyProps {
 	playerName: string;
 	onGameStart: () => void;
 	onPlayerNameChange: (newName: string) => void;
+	initialLobbyData?: LobbyState | null;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({
@@ -25,36 +26,49 @@ export const Lobby: React.FC<LobbyProps> = ({
 	playerName,
 	onGameStart,
 	onPlayerNameChange,
+	initialLobbyData,
 }) => {
-	const [lobby, setLobby] = useState<LobbyState | null>(null);
+	const [lobby, setLobby] = useState<LobbyState | null>(initialLobbyData || null);
 	const [isStarting, setIsStarting] = useState(false);
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [tempPlayerName, setTempPlayerName] = useState(playerName);
 	const [copySuccess, setCopySuccess] = useState(false);
-
 	useEffect(() => {
-		const unsubscribe = subscribeToLobby(
-			gameId,
-			(lobbyData: SetStateAction<LobbyState | null>) => {
-				setLobby(lobbyData);
-				if (
-					lobbyData &&
-					typeof lobbyData !== "function" &&
-					"players" in lobbyData &&
-					Array.isArray(lobbyData.players)
-				) {
-					// The players array may be typed as Omit<Player, ...>, so we can't use (p: Player)
-					const player = lobbyData.players.find(
-						(p: { id: string; name: string }) => p.id === playerId,
-					);
-					if (player && player.name !== playerName) {
-						onPlayerNameChange(player.name);
+		// Set up subscription with optional delay for initial data
+		const delay = initialLobbyData ? 3000 : 0; // 3 second delay for hosts with initial data
+		let unsubscribe: (() => void) | null = null;
+		
+		const timer = setTimeout(() => {
+			unsubscribe = subscribeToLobby(
+				gameId,
+				(lobbyData: SetStateAction<LobbyState | null>) => {
+					if (lobbyData && typeof lobbyData !== "function") {
+						setLobby(lobbyData);
+						if ("players" in lobbyData && Array.isArray(lobbyData.players)) {
+							// The players array may be typed as Omit<Player, ...>, so we can't use (p: Player)
+							const player = lobbyData.players.find(
+								(p: { id: string; name: string }) => p.id === playerId,
+							);
+							if (player && player.name !== playerName) {
+								onPlayerNameChange(player.name);
+							}
+						}
+					} else if (lobbyData === null) {
+						// Lobby disappeared - game has started
+						onGameStart();
 					}
-				}
-			},
-		);
-		return unsubscribe;
-	}, [gameId, playerId, playerName, onPlayerNameChange]);
+				},
+			);
+		}, delay);
+		
+		// Cleanup function
+		return () => {
+			clearTimeout(timer);
+			if (unsubscribe) {
+				unsubscribe();
+			}
+		};
+	}, [gameId, playerId, playerName, onPlayerNameChange, onGameStart, initialLobbyData]);
 
 	useEffect(() => {
 		setTempPlayerName(playerName);
@@ -113,6 +127,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 			setCopySuccess(true);
 			setTimeout(() => setCopySuccess(false), 2000);
 		}
+		
 	};
 
 	if (!lobby) {

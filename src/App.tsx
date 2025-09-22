@@ -19,19 +19,8 @@ function App() {
   const [playerName, setPlayerName] = useState('');
   const [game, setGame] = useState<GameState | null>(null);
   const [isRestoring, setIsRestoring] = useState(true);
-
-  // Set up periodic cleanup of old games (every 30 minutes)
-  useEffect(() => {
-    // Run cleanup immediately on app load
-    cleanupOldGames();
-    
-    // Set up interval for periodic cleanup
-    const cleanupInterval = setInterval(() => {
-      cleanupOldGames();
-    }, 30 * 60 * 1000); // 30 minutes
-    
-    return () => clearInterval(cleanupInterval);
-  }, []);
+  const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [initialLobbyData, setInitialLobbyData] = useState<any>(null);
 
   // Restore game state from URL or localStorage on app load
   useEffect(() => {
@@ -39,6 +28,13 @@ function App() {
       const urlGameId = getGameIdFromUrl();
       const urlPlayerId = getPlayerIdFromUrl();
       
+      // Skip restoration if we're in the middle of creating a game
+      if (isCreatingGame) {
+        setIsRestoring(false);
+        return;
+      }
+      
+      // Only make Firestore requests if we have URL parameters
       if (urlGameId && urlPlayerId) {
         // URL has both game ID and player ID - try to restore
         setGameId(urlGameId);
@@ -88,7 +84,7 @@ function App() {
     };
 
     restoreGameState();
-  }, []);
+  }, [isCreatingGame]);
 
   useEffect(() => {
     if (gameId && appState === 'game') {
@@ -112,39 +108,19 @@ function App() {
     }
   }, [gameId, appState]);
 
-  // Handle lobby-to-game transition
-  useEffect(() => {
-    if (gameId && playerId && appState === 'lobby') {
-      const unsubscribe = subscribeToLobby(gameId, (lobbyData) => {
-        if (!lobbyData) {
-          // Lobby disappeared, check if game started
-          const gameUnsubscribe = subscribeToGame(gameId, (gameData) => {
-            if (gameData) {
-              // Game has started, transition to game
-              setGame(gameData);
-              setAppState('game');
-              setIsHost(gameData.hostId === playerId);
-            } else {
-              // Neither lobby nor game found, go back to setup
-              setAppState('setup');
-              clearGameState();
-              clearUrlParams();
-            }
-          });
-          return gameUnsubscribe;
-        }
-      });
-      
-      return unsubscribe;
-    }
-  }, [gameId, playerId, appState]);
+  // Remove duplicate lobby subscription - the Lobby component handles this
 
-  const handleJoinLobby = (newGameId: string, newPlayerId: string, newIsHost: boolean, newPlayerName: string) => {
+  const handleJoinLobby = (newGameId: string, newPlayerId: string, newIsHost: boolean, newPlayerName: string, lobbyData?: any) => {
+    // Set flag to prevent restoration logic from interfering
+    setIsCreatingGame(true);
+    
     setGameId(newGameId);
     setPlayerId(newPlayerId);
     setIsHost(newIsHost);
     setPlayerName(newPlayerName);
+    setInitialLobbyData(lobbyData || null);
     setAppState('lobby');
+    setIsRestoring(false);
     
     // Save game state
     saveGameState({
@@ -153,6 +129,9 @@ function App() {
       isHost: newIsHost,
       playerName: newPlayerName
     });
+    
+    // Clear the creating flag after a short delay
+    setTimeout(() => setIsCreatingGame(false), 100);
   };
 
   const handleGameStart = () => {
@@ -190,6 +169,7 @@ function App() {
             playerName={playerName}
             onGameStart={handleGameStart}
             onPlayerNameChange={handlePlayerNameChange}
+            initialLobbyData={initialLobbyData}
           />
         );
       
