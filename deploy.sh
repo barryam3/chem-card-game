@@ -135,6 +135,8 @@ main() {
 	fi
 
 	restore_head
+
+	firebase deploy --only firestore:rules
 }
 
 initial_deploy() {
