@@ -2,54 +2,19 @@ import {
   collection,
   addDoc,
   updateDoc,
-  deleteDoc,
   getDocs,
-  onSnapshot,
   query,
   where,
   Timestamp,
   runTransaction,
+  DocumentReference,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { GameState, LobbyState, Player } from "./types";
-import { gameData } from "./data";
+import { gameData as chemistryElements } from "./data";
 import { dealCards, generateGameId, canSpellWord } from "./gameLogic";
 
 const GAMES_COLLECTION = "games";
-const LOBBIES_COLLECTION = "lobbies";
-
-// Auto-cleanup: Delete games and lobbies older than 2 hours
-async function cleanupOldGames(): Promise<void> {
-  const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000; // 2 hours in milliseconds
-
-  try {
-    // Clean up old lobbies
-    const oldLobbiesQuery = query(
-      collection(db, LOBBIES_COLLECTION),
-      where("createdAt", "<", twoHoursAgo)
-    );
-    const oldLobbiesSnapshot = await getDocs(oldLobbiesQuery);
-
-    const lobbyDeletePromises = oldLobbiesSnapshot.docs.map((doc) =>
-      deleteDoc(doc.ref)
-    );
-    await Promise.all(lobbyDeletePromises);
-
-    // Clean up old games
-    const oldGamesQuery = query(
-      collection(db, GAMES_COLLECTION),
-      where("createdAt", "<", twoHoursAgo)
-    );
-    const oldGamesSnapshot = await getDocs(oldGamesQuery);
-
-    const gameDeletePromises = oldGamesSnapshot.docs.map((doc) =>
-      deleteDoc(doc.ref)
-    );
-    await Promise.all(gameDeletePromises);
-  } catch (error) {
-    console.warn("Failed to cleanup old games:", error);
-  }
-}
 
 // Create a new game lobby
 export async function createLobby(): Promise<{
@@ -57,11 +22,6 @@ export async function createLobby(): Promise<{
   playerId: string;
   lobbyData: LobbyState;
 }> {
-  console.log("🔥 createLobby: Starting lobby creation");
-
-  // Temporarily disable cleanup to test request count
-  // await cleanupOldGames();
-
   const gameId = generateGameId();
   const hostId = Math.random().toString(36).substring(2, 15);
 
@@ -70,8 +30,10 @@ export async function createLobby(): Promise<{
     new Date(Date.now() + 2 * 60 * 60 * 1000)
   );
 
-  const lobbyData: LobbyState = {
+  // Create a game in lobby phase (instead of separate lobby)
+  const lobbyData: LobbyState & { phase: "lobby" } = {
     id: gameId,
+    phase: "lobby",
     players: [
       {
         id: hostId,
@@ -84,10 +46,7 @@ export async function createLobby(): Promise<{
     ttl: ttlTimestamp, // TTL field for future use
   };
 
-  console.log("🔥 createLobby: Adding document to Firestore");
-  await addDoc(collection(db, LOBBIES_COLLECTION), lobbyData);
-  console.log("🔥 createLobby: Document added successfully");
-
+  await addDoc(collection(db, GAMES_COLLECTION), lobbyData);
 
   return { gameId, playerId: hostId, lobbyData };
 }
@@ -96,22 +55,23 @@ export async function createLobby(): Promise<{
 export async function joinLobby(
   gameId: string
 ): Promise<{ success: boolean; playerId?: string }> {
-  const lobbiesQuery = query(
-    collection(db, LOBBIES_COLLECTION),
-    where("id", "==", gameId)
+  const gamesQuery = query(
+    collection(db, GAMES_COLLECTION),
+    where("id", "==", gameId),
+    where("phase", "==", "lobby")
   );
 
-  const querySnapshot = await getDocs(lobbiesQuery);
+  const querySnapshot = await getDocs(gamesQuery);
 
   if (querySnapshot.empty) {
     return { success: false };
   }
 
-  const lobbyDoc = querySnapshot.docs[0];
-  const lobbyData = lobbyDoc.data() as LobbyState;
+  const gameDoc = querySnapshot.docs[0];
+  const gameData = gameDoc.data() as LobbyState;
 
   const playerId = Math.random().toString(36).substring(2, 15);
-  const playerNumber = lobbyData.players.length + 1;
+  const playerNumber = gameData.players.length + 1;
   const newPlayer: Omit<Player, "draftedCards" | "hand" | "score"> = {
     id: playerId,
     name: `Player ${playerNumber}`,
@@ -120,26 +80,26 @@ export async function joinLobby(
 
   // Use transaction to ensure atomic update
   await runTransaction(db, async (transaction) => {
-    const freshDoc = await transaction.get(lobbyDoc.ref);
+    const freshDoc = await transaction.get(gameDoc.ref);
     if (!freshDoc.exists()) {
-      throw new Error("Lobby document no longer exists");
+      throw new Error("Game document no longer exists");
     }
 
     const freshData = freshDoc.data() as LobbyState;
     const updatedPlayers = [...freshData.players, newPlayer];
 
-    transaction.update(lobbyDoc.ref, {
+    transaction.update(gameDoc.ref, {
       players: updatedPlayers,
     });
   });
-
 
   return { success: true, playerId };
 }
 
 // Update player name in lobby
 export async function updatePlayerName(
-  gameId: string,
+  gameDocRef: DocumentReference,
+  gameData: LobbyState,
   playerId: string,
   newName: string
 ): Promise<boolean> {
@@ -147,33 +107,20 @@ export async function updatePlayerName(
   if (!newName || newName.length > 50) {
     throw new Error("Player name must be between 1 and 50 characters");
   }
-  const lobbiesQuery = query(
-    collection(db, LOBBIES_COLLECTION),
-    where("id", "==", gameId)
-  );
 
-  const querySnapshot = await getDocs(lobbiesQuery);
-
-  if (querySnapshot.empty) {
-    return false;
-  }
-
-  const lobbyDoc = querySnapshot.docs[0];
-  const lobbyData = lobbyDoc.data() as LobbyState;
-
-  const playerIndex = lobbyData.players.findIndex((p) => p.id === playerId);
+  const playerIndex = gameData.players.findIndex((p) => p.id === playerId);
   if (playerIndex === -1) {
     return false;
   }
 
   // Update the player's name
-  const updatedPlayers = [...lobbyData.players];
+  const updatedPlayers = [...gameData.players];
   updatedPlayers[playerIndex] = {
     ...updatedPlayers[playerIndex],
     name: newName,
   };
 
-  await updateDoc(lobbyDoc.ref, {
+  await updateDoc(gameDocRef, {
     players: updatedPlayers,
   });
 
@@ -181,27 +128,16 @@ export async function updatePlayerName(
 }
 
 // Start the game (convert lobby to game)
-export async function startGame(gameId: string): Promise<boolean> {
-  const lobbiesQuery = query(
-    collection(db, LOBBIES_COLLECTION),
-    where("id", "==", gameId)
-  );
-
-  const querySnapshot = await getDocs(lobbiesQuery);
-
-  if (querySnapshot.empty) {
-    return false;
-  }
-
-  const lobbyDoc = querySnapshot.docs[0];
-  const lobbyData = lobbyDoc.data() as LobbyState;
-
-  if (lobbyData.players.length < 2) {
+export async function startGame(
+  gameDocRef: DocumentReference,
+  gameData: LobbyState
+): Promise<boolean> {
+  if (gameData.players.length < 2) {
     return false;
   }
 
   // Deal cards to players
-  const hands = dealCards(lobbyData.players.length);
+  const hands = dealCards(gameData.players.length);
   const totalRounds = hands[0].length;
 
   // Create TTL timestamp - 2 hours from now
@@ -209,95 +145,34 @@ export async function startGame(gameId: string): Promise<boolean> {
     new Date(Date.now() + 2 * 60 * 60 * 1000)
   );
 
-  // Create game state
-  const gameState: GameState = {
-    id: gameId,
+  // Update the existing document to convert from lobby to active game
+  const updatedGameState = {
     phase: "drafting",
-    players: lobbyData.players.map((player, index) => ({
+    players: gameData.players.map((player, index) => ({
       ...player,
       draftedCards: [],
       hand: hands[index],
     })),
-    deck: [...gameData],
+    deck: [...chemistryElements], // chemistry elements array
     currentRound: 1,
     totalRounds,
     wordSpellingWinners: [],
-    createdAt: Date.now(),
-    hostId: lobbyData.hostId,
     ttl: ttlTimestamp, // Firestore TTL field - auto-delete after 2 hours
   };
 
-  // Add game to games collection
-  await addDoc(collection(db, GAMES_COLLECTION), gameState);
-
-  // Remove lobby
-  await deleteDoc(lobbyDoc.ref);
-
+  // Update the existing document instead of creating a new one and deleting the old one
+  await updateDoc(gameDocRef, updatedGameState);
 
   return true;
 }
 
-// Get lobby state
-export function subscribeToLobby(
-  gameId: string,
-  callback: (lobby: LobbyState | null) => void
-) {
-  const lobbiesQuery = query(
-    collection(db, LOBBIES_COLLECTION),
-    where("id", "==", gameId)
-  );
-
-  return onSnapshot(lobbiesQuery, (querySnapshot) => {
-    if (querySnapshot.empty) {
-      callback(null);
-      return;
-    }
-
-    const lobbyData = querySnapshot.docs[0].data() as LobbyState;
-    callback(lobbyData);
-  });
-}
-
-// Get game state
-export function subscribeToGame(
-  gameId: string,
-  callback: (game: GameState | null) => void
-) {
-  const gamesQuery = query(
-    collection(db, GAMES_COLLECTION),
-    where("id", "==", gameId)
-  );
-
-  return onSnapshot(gamesQuery, (querySnapshot) => {
-    if (querySnapshot.empty) {
-      callback(null);
-      return;
-    }
-
-    const gameData = querySnapshot.docs[0].data() as GameState;
-    callback(gameData);
-  });
-}
-
 // Submit draft selection
 export async function submitDraftSelection(
-  gameId: string,
+  gameDocRef: DocumentReference,
+  gameData: GameState,
   playerId: string,
   cardIndex: number
 ): Promise<boolean> {
-  const gamesQuery = query(
-    collection(db, GAMES_COLLECTION),
-    where("id", "==", gameId)
-  );
-
-  const querySnapshot = await getDocs(gamesQuery);
-
-  if (querySnapshot.empty) {
-    return false;
-  }
-
-  const gameDoc = querySnapshot.docs[0];
-  const gameData = gameDoc.data() as GameState;
 
   const playerIndex = gameData.players.findIndex((p) => p.id === playerId);
   if (playerIndex === -1) {
@@ -367,13 +242,14 @@ export async function submitDraftSelection(
     }
   }
 
-  await updateDoc(gameDoc.ref, updatedGameData);
+  await updateDoc(gameDocRef, updatedGameData);
   return true;
 }
 
 // Check for word spelling and update winners
 export async function checkWordSpelling(
-  gameId: string,
+  gameDocRef: DocumentReference,
+  gameData: GameState,
   playerId: string,
   word: string
 ): Promise<boolean> {
@@ -383,19 +259,6 @@ export async function checkWordSpelling(
       "Word must be exactly 5 letters and contain only alphabetic characters"
     );
   }
-  const gamesQuery = query(
-    collection(db, GAMES_COLLECTION),
-    where("id", "==", gameId)
-  );
-
-  const querySnapshot = await getDocs(gamesQuery);
-
-  if (querySnapshot.empty) {
-    return false;
-  }
-
-  const gameDoc = querySnapshot.docs[0];
-  const gameData = gameDoc.data() as GameState;
 
   const player = gameData.players.find((p) => p.id === playerId);
   if (!player) {
@@ -428,12 +291,9 @@ export async function checkWordSpelling(
     ...gameData.wordSpellingWinners,
     { playerId, round: gameData.currentRound },
   ];
-  await updateDoc(gameDoc.ref, {
+  await updateDoc(gameDocRef, {
     wordSpellingWinners: updatedWinners,
   });
 
   return true;
 }
-
-// Export cleanup function for manual cleanup
-export { cleanupOldGames };

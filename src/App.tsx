@@ -27,7 +27,7 @@ function App() {
   // Only use the useGame hook when we have both gameId and playerId
   // If we only have gameId, we should show GameSetup with gameId pre-populated
   const shouldSubscribeToGame = gameId && playerId;
-  const { game, loading: gameLoading, error: gameError } = useGame(shouldSubscribeToGame ? gameId : null);
+  const { game, gameDocRef, loading: gameLoading, error: gameError } = useGame(shouldSubscribeToGame ? gameId : null);
 
   // Derive player info from game data (no local state needed)
   const currentPlayer = game && playerId ? game.players.find(p => p.id === playerId) : null;
@@ -110,6 +110,7 @@ function App() {
             playerId={playerId}
             isHost={isHost}
             playerName={playerName}
+            gameDocRef={gameDocRef}
             onGameStart={handleGameStart}
             onPlayerNameChange={handlePlayerNameChange}
           />
@@ -133,6 +134,7 @@ function App() {
         return (
           <DraftingPhase
             game={gameState}
+            gameDocRef={gameDocRef}
             currentPlayerId={playerId}
           />
         );

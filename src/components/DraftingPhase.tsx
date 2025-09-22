@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DocumentReference } from "firebase/firestore";
 import type { GameState } from "../types";
 import type { ChemistryElement } from "../data";
 import { Card } from "./Card";
@@ -9,11 +10,13 @@ import "./DraftingPhase.scss";
 
 interface DraftingPhaseProps {
 	game: GameState;
+	gameDocRef: DocumentReference | null;
 	currentPlayerId: string;
 }
 
 export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 	game,
+	gameDocRef,
 	currentPlayerId,
 }) => {
 	const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(
@@ -41,13 +44,14 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 
 	const handleCardSelect = async (index: number) => {
 		// Don't allow selection if currently submitting or already submitted
-		if (isSubmitting || hasSubmitted) return;
+		if (isSubmitting || hasSubmitted || !gameDocRef) return;
 		
 		setSelectedCardIndex(index);
 		setIsSubmitting(true);
 		
 		const success = await submitDraftSelection(
-			game.id,
+			gameDocRef,
+			game,
 			currentPlayerId,
 			index,
 		);
@@ -62,13 +66,14 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 
 	const handleWordSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (wordInput.length === 5 && !wordSubmitting) {
+		if (wordInput.length === 5 && !wordSubmitting && gameDocRef) {
 			setWordSubmitting(true);
 			setWordError("");
 
 			try {
 				const success = await checkWordSpelling(
-					game.id,
+					gameDocRef,
+					game,
 					currentPlayerId,
 					wordInput,
 				);
