@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import type { LobbyState } from '../types';
 import { createLobby, joinLobby } from '../firebaseService';
 import { getGameIdFromUrl, setGameIdInUrl, setPlayerIdInUrl } from '../utils/urlUtils';
 import './GameSetup.scss';
 
 interface GameSetupProps {
-	onJoinLobby: (gameId: string, playerId: string, isHost: boolean, playerName: string, lobbyData?: LobbyState) => void;
+	onJoinLobby: (gameId: string, playerId: string, isHost: boolean, playerName: string) => void;
 }
 
 export const GameSetup: React.FC<GameSetupProps> = ({ onJoinLobby }) => {
@@ -20,10 +19,10 @@ export const GameSetup: React.FC<GameSetupProps> = ({ onJoinLobby }) => {
     setError('');
 
     try {
-      const { gameId, playerId, lobbyData } = await createLobby();
+      const { gameId, playerId } = await createLobby();
       setGameIdInUrl(gameId);
       setPlayerIdInUrl(playerId);
-      onJoinLobby(gameId, playerId, true, 'Player 1', lobbyData);
+      onJoinLobby(gameId, playerId, true, 'Player 1');
     } catch {
       setError('Failed to create game. Please try again.');
       setIsCreating(false);
