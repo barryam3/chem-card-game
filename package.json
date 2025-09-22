@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:emulator\" \"npm run dev:app\"",
     "dev:app": "vite",
-    "dev:emulator": "firebase emulators:start --only firestore,ui",
+    "dev:emulator": "firebase emulators:start --only firestore",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

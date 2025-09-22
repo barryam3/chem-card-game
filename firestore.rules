@@ -17,9 +17,21 @@ service cloud.firestore {
              ts < (request.time.toMillis() + 60000); // Allow 1 minute in future
     }
     
-    function isValidLobbyData(data) {
-      return data.keys().hasAll(['id', 'players', 'hostId', 'createdAt']) &&
+    function isValidPlayer(player) {
+      return player.keys().hasAll(['id', 'name', 'isHost']) &&
+             player.id is string &&
+             isValidPlayerName(player.name) &&
+             player.isHost is bool &&
+             // Optional fields for active games
+             (!('draftedCards' in player) || player.draftedCards is list) &&
+             (!('hand' in player) || player.hand is list) &&
+             (!('score' in player) || player.score is number);
+    }
+    
+    function isValidLobbyPhaseData(data) {
+      return data.keys().hasAll(['id', 'phase', 'players', 'hostId', 'createdAt']) &&
              data.id is string &&
+             data.phase == 'lobby' &&
              data.players is list &&
              data.players.size() >= 1 && data.players.size() <= 10 && // Max 10 players
              data.hostId is string &&
@@ -27,25 +39,46 @@ service cloud.firestore {
              (!('ttl' in data) || data.ttl is timestamp);
     }
     
-    function isValidGameData(data) {
+    function isValidActiveGameData(data) {
       return data.keys().hasAll(['id', 'phase', 'players', 'currentRound', 'totalRounds', 'createdAt', 'hostId']) &&
-             data.phase in ['drafting', 'scoring'] &&
+             data.phase in ['drafting', 'scoring', 'finished'] &&
              data.players is list &&
              data.players.size() >= 2 && data.players.size() <= 10 &&
              data.currentRound is number && data.currentRound >= 1 && data.currentRound <= 50 &&
              data.totalRounds is number && data.totalRounds >= 1 && data.totalRounds <= 50 &&
              data.createdAt is number &&
-             (!('ttl' in data) || data.ttl is timestamp);
+             (!('ttl' in data) || data.ttl is timestamp) &&
+             (!('deck' in data) || data.deck is list) &&
+             (!('wordSpellingWinners' in data) || data.wordSpellingWinners is list);
     }
     
-    // Lobbies collection - temporarily permissive for debugging
-    match /lobbies/{lobbyId} {
-      allow read, write: if true;
+    function isValidGameData(data) {
+      return (data.phase == 'lobby' && isValidLobbyPhaseData(data)) ||
+             (data.phase in ['drafting', 'scoring', 'finished'] && isValidActiveGameData(data));
     }
     
-    // Games collection - temporarily permissive for debugging  
+    // Games collection - unified collection for lobbies and active games
     match /games/{gameId} {
-      allow read, write: if true;
+      // Allow reading any game
+      allow read: if true;
+      
+      // Allow creating new games (lobby phase)
+      allow create: if isValidGameData(request.resource.data) &&
+                       request.resource.data.phase == 'lobby' &&
+                       isValidGameId(request.resource.data.id) &&
+                       isRecentTimestamp(request.resource.data.createdAt);
+      
+      // Allow updating games
+      allow update: if isValidGameData(request.resource.data) &&
+                       // Preserve the game ID
+                       request.resource.data.id == resource.data.id &&
+                       // Don't allow changing creation timestamp
+                       request.resource.data.createdAt == resource.data.createdAt &&
+                       // Don't allow changing host ID
+                       request.resource.data.hostId == resource.data.hostId;
+      
+      // Don't allow deleting games (they auto-delete via TTL)
+      allow delete: if false;
     }
     
     // Deny access to all other collections

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { DocumentReference } from "firebase/firestore";
-import { useGame } from "../hooks/useGame";
+import type { DocumentReference } from "firebase/firestore";
+import type { GameData } from "../hooks/useGame";
 import { startGame, updatePlayerName } from "../firebaseService";
 import { getGameUrl } from "../utils/urlUtils";
 import { savePlayerName } from "../utils/storageUtils";
@@ -11,7 +11,10 @@ interface LobbyProps {
 	playerId: string;
 	isHost: boolean;
 	playerName: string;
+	lobby: GameData | null;
 	gameDocRef: DocumentReference | null;
+	loading: boolean;
+	error: string | null;
 	onGameStart: () => void;
 	onPlayerNameChange: (newName: string) => void;
 }
@@ -21,7 +24,10 @@ export const Lobby: React.FC<LobbyProps> = ({
 	playerId,
 	isHost,
 	playerName,
+	lobby,
 	gameDocRef,
+	loading,
+	error,
 	onGameStart,
 	onPlayerNameChange,
 }) => {
@@ -29,9 +35,6 @@ export const Lobby: React.FC<LobbyProps> = ({
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [tempPlayerName, setTempPlayerName] = useState(playerName);
 	const [copySuccess, setCopySuccess] = useState(false);
-	
-	// Use the useGame hook to get lobby data
-	const { game: lobby, loading, error } = useGame(gameId);
 	
 	// Handle game start transition
 	useEffect(() => {
