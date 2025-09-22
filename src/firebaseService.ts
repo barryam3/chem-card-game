@@ -14,7 +14,6 @@ import { db } from "./firebase";
 import type { GameState, LobbyState, Player } from "./types";
 import { gameData } from "./data";
 import { dealCards, generateGameId, canSpellWord } from "./gameLogic";
-import { trackUsage } from "./monitoring";
 
 const GAMES_COLLECTION = "games";
 const LOBBIES_COLLECTION = "lobbies";
@@ -89,8 +88,6 @@ export async function createLobby(): Promise<{
   await addDoc(collection(db, LOBBIES_COLLECTION), lobbyData);
   console.log("🔥 createLobby: Document added successfully");
 
-  // Track usage for monitoring
-  trackUsage.lobbyCreated();
 
   return { gameId, playerId: hostId, lobbyData };
 }
@@ -136,8 +133,6 @@ export async function joinLobby(
     });
   });
 
-  // Track usage for monitoring
-  trackUsage.playerJoined();
 
   return { success: true, playerId };
 }
@@ -238,8 +233,6 @@ export async function startGame(gameId: string): Promise<boolean> {
   // Remove lobby
   await deleteDoc(lobbyDoc.ref);
 
-  // Track usage for monitoring
-  trackUsage.gameStarted();
 
   return true;
 }
