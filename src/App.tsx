@@ -3,123 +3,55 @@ import { GameSetup } from './components/GameSetup';
 import { Lobby } from './components/Lobby';
 import { DraftingPhase } from './components/DraftingPhase';
 import { ScoringPhase } from './components/ScoringPhase';
-import type { GameState, LobbyState } from './types';
-import { subscribeToGame, subscribeToLobby } from './firebaseService';
+import { useGame } from './hooks/useGame';
 import { getGameIdFromUrl, getPlayerIdFromUrl, clearUrlParams } from './utils/urlUtils';
 import { saveGameState, clearGameState } from './utils/storageUtils';
+import { getElementByAtomicNumber } from './data';
 import './App.scss';
 
-type AppState = 'setup' | 'lobby' | 'game';
 
 function App() {
-  const [appState, setAppState] = useState<AppState>('setup');
-  const [gameId, setGameId] = useState('');
-  const [playerId, setPlayerId] = useState('');
-  const [isHost, setIsHost] = useState(false);
-  const [playerName, setPlayerName] = useState('');
-  const [game, setGame] = useState<GameState | null>(null);
-  const [isRestoring, setIsRestoring] = useState(true);
-  const [isCreatingGame, setIsCreatingGame] = useState(false);
-  const [initialLobbyData, setInitialLobbyData] = useState<LobbyState | null>(null);
+  // Initialize state from URL on first render
+  const [gameId, setGameId] = useState(() => {
+    const urlGameId = getGameIdFromUrl();
+    return urlGameId || '';
+  });
+  
+  const [playerId, setPlayerId] = useState(() => {
+    const urlPlayerId = getPlayerIdFromUrl();
+    return urlPlayerId || '';
+  });
+  
+  const [isRestoring, setIsRestoring] = useState(false);
+  
+  // Only use the useGame hook when we have both gameId and playerId
+  // If we only have gameId, we should show GameSetup with gameId pre-populated
+  const shouldSubscribeToGame = gameId && playerId;
+  const { game, loading: gameLoading, error: gameError } = useGame(shouldSubscribeToGame ? gameId : null);
 
-  // Restore game state from URL or localStorage on app load
+  // Derive player info from game data (no local state needed)
+  const currentPlayer = game && playerId ? game.players.find(p => p.id === playerId) : null;
+  const isHost = currentPlayer?.isHost ?? false;
+  const playerName = currentPlayer?.name ?? 'Player';
+
+  // Handle game finished state
   useEffect(() => {
-    const restoreGameState = async () => {
-      const urlGameId = getGameIdFromUrl();
-      const urlPlayerId = getPlayerIdFromUrl();
+    if (game && game.phase === 'finished') {
+      // Let the user see the results, then clear after a delay
+      const timer = setTimeout(() => {
+        clearGameState();
+        clearUrlParams();
+        setGameId('');
+        setPlayerId('');
+      }, 30000); // 30 seconds to view results
       
-      // Skip restoration if we're in the middle of creating a game
-      if (isCreatingGame) {
-        setIsRestoring(false);
-        return;
-      }
-      
-      // Only make Firestore requests if we have URL parameters
-      if (urlGameId && urlPlayerId) {
-        // URL has both game ID and player ID - try to restore
-        setGameId(urlGameId);
-        setPlayerId(urlPlayerId);
-        
-        // Try to find the game first
-        const gameUnsubscribe = subscribeToGame(urlGameId, (gameData) => {
-          if (gameData) {
-            setGame(gameData);
-            setAppState('game');
-            setIsHost(gameData.hostId === urlPlayerId);
-            setIsRestoring(false);
-          } else {
-            // Game not found, try lobby
-            const lobbyUnsubscribe = subscribeToLobby(urlGameId, (lobbyData) => {
-              if (lobbyData) {
-                const player = lobbyData.players.find(p => p.id === urlPlayerId);
-                if (player) {
-                  setAppState('lobby');
-                  setIsHost(player.isHost);
-                  setPlayerName(player.name);
-                  setIsRestoring(false);
-                } else {
-                  // Player not found in lobby
-                  setAppState('setup');
-                  setIsRestoring(false);
-                }
-              } else {
-                // Neither game nor lobby found
-                setAppState('setup');
-                setIsRestoring(false);
-              }
-            });
-            return lobbyUnsubscribe;
-          }
-        });
-        return gameUnsubscribe;
-      } else if (urlGameId && !urlPlayerId) {
-        // URL has only game ID - go to setup screen with game ID pre-populated
-        setGameId(urlGameId);
-        setAppState('setup');
-        setIsRestoring(false);
-      } else {
-        // No URL parameters - start fresh
-        setIsRestoring(false);
-      }
-    };
-
-    restoreGameState();
-  }, [isCreatingGame]);
-
-  useEffect(() => {
-    if (gameId && appState === 'game') {
-      const unsubscribe = subscribeToGame(gameId, (gameData) => {
-        if (gameData) {
-          setGame(gameData);
-          
-          // Check if game has ended
-          if (gameData.phase === 'finished') {
-            // Game is complete, could show final results or redirect
-          }
-        } else {
-          // Game not found, might have been deleted
-          setAppState('setup');
-          clearGameState();
-          clearUrlParams();
-        }
-      });
-      
-      return unsubscribe;
+      return () => clearTimeout(timer);
     }
-  }, [gameId, appState]);
+  }, [game]);
 
-  // Remove duplicate lobby subscription - the Lobby component handles this
-
-  const handleJoinLobby = (newGameId: string, newPlayerId: string, newIsHost: boolean, newPlayerName: string, lobbyData?: LobbyState) => {
-    // Set flag to prevent restoration logic from interfering
-    setIsCreatingGame(true);
-    
+  const handleJoinLobby = (newGameId: string, newPlayerId: string, newIsHost: boolean, newPlayerName: string) => {
     setGameId(newGameId);
     setPlayerId(newPlayerId);
-    setIsHost(newIsHost);
-    setPlayerName(newPlayerName);
-    setInitialLobbyData(lobbyData || null);
-    setAppState('lobby');
     setIsRestoring(false);
     
     // Save game state
@@ -129,17 +61,16 @@ function App() {
       isHost: newIsHost,
       playerName: newPlayerName
     });
-    
-    // Clear the creating flag after a short delay
-    setTimeout(() => setIsCreatingGame(false), 100);
   };
 
   const handleGameStart = () => {
-    setAppState('game');
+    // Game start is handled automatically by the useGame hook
+    // when the game phase changes from 'lobby' to 'drafting'
   };
 
   const handlePlayerNameChange = (newName: string) => {
-    setPlayerName(newName);
+    // Player name changes are handled by the Lobby component
+    // and automatically reflected through the useGame hook
     // Update stored game state
     if (gameId && playerId) {
       saveGameState({
@@ -152,14 +83,26 @@ function App() {
   };
 
   const renderCurrentView = () => {
-    if (isRestoring) {
-      return <div className="loading">Restoring game...</div>;
+    if (isRestoring || gameLoading) {
+      return <div className="loading">Loading...</div>;
     }
 
-    switch (appState) {
-      case 'setup':
-        return <GameSetup onJoinLobby={handleJoinLobby} />;
-      
+    if (gameError) {
+      return <div className="error">Error: {gameError}</div>;
+    }
+
+    // If we don't have a gameId, or we have gameId but no playerId, show setup
+    if (!gameId || !playerId) {
+      return <GameSetup onJoinLobby={handleJoinLobby} />;
+    }
+
+    // If we have both gameId and playerId but no game data yet, show loading
+    if (!game) {
+      return <div className="loading">Loading game...</div>;
+    }
+
+    // Render based on game phase
+    switch (game.phase) {
       case 'lobby':
         return (
           <Lobby
@@ -169,49 +112,57 @@ function App() {
             playerName={playerName}
             onGameStart={handleGameStart}
             onPlayerNameChange={handlePlayerNameChange}
-            initialLobbyData={initialLobbyData}
           />
         );
       
-      case 'game':
-        if (!game) {
-          return <div className="loading">Loading game...</div>;
-        }
+      case 'drafting': {
+        // Convert game data to GameState format for existing components
+        const gameState = {
+          ...game,
+          players: game.players.map(p => ({
+            ...p,
+            draftedCards: p.draftedCards || [],
+            hand: p.hand || [],
+          })),
+          currentRound: game.currentRound || 1,
+          totalRounds: game.totalRounds || 1,
+          deck: (game.deck || []).map(atomicNumber => getElementByAtomicNumber(atomicNumber)), // Convert numbers to full ChemistryElement objects
+          wordSpellingWinners: game.wordSpellingWinners || [],
+        };
         
-        switch (game.phase) {
-          case 'drafting':
-            return (
-              <DraftingPhase
-                game={game}
-                currentPlayerId={playerId}
-              />
-            );
-          
-          case 'scoring':
-            return (
-              <ScoringPhase
-                game={game}
-                currentPlayerId={playerId}
-              />
-            );
-          
-          case 'finished':
-            return (
-              <div className="game-finished">
-                <h2>Game Finished!</h2>
-                <p>Thank you for playing Chemistry Card Game!</p>
-                <button type="button" onClick={() => setAppState('setup')}>
-                  Play Again
-                </button>
-              </div>
-            );
-          
-          default:
-            return <div>Unknown game phase</div>;
-        }
+        return (
+          <DraftingPhase
+            game={gameState}
+            currentPlayerId={playerId}
+          />
+        );
+      }
+      
+      case 'scoring':
+      case 'finished': {
+        const scoringGameState = {
+          ...game,
+          players: game.players.map(p => ({
+            ...p,
+            draftedCards: p.draftedCards || [],
+            hand: p.hand || [],
+          })),
+          currentRound: game.currentRound || 1,
+          totalRounds: game.totalRounds || 1,
+          deck: (game.deck || []).map(atomicNumber => getElementByAtomicNumber(atomicNumber)), // Convert numbers to full ChemistryElement objects
+          wordSpellingWinners: game.wordSpellingWinners || [],
+        };
+        
+        return (
+          <ScoringPhase
+            game={scoringGameState}
+            currentPlayerId={playerId}
+          />
+        );
+      }
       
       default:
-        return <div>Unknown app state</div>;
+        return <div>Unknown game phase: {game.phase}</div>;
     }
   };
 

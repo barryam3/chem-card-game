@@ -1,10 +1,6 @@
-import { useState, useEffect, type SetStateAction } from "react";
-import type { LobbyState } from "../types";
-import {
-	subscribeToLobby,
-	startGame,
-	updatePlayerName,
-} from "../firebaseService";
+import { useState, useEffect } from "react";
+import { useGame } from "../hooks/useGame";
+import { startGame, updatePlayerName } from "../firebaseService";
 import { getGameUrl } from "../utils/urlUtils";
 import { savePlayerName } from "../utils/storageUtils";
 import './Lobby.scss';
@@ -16,7 +12,6 @@ interface LobbyProps {
 	playerName: string;
 	onGameStart: () => void;
 	onPlayerNameChange: (newName: string) => void;
-	initialLobbyData?: LobbyState | null;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({
@@ -26,49 +21,31 @@ export const Lobby: React.FC<LobbyProps> = ({
 	playerName,
 	onGameStart,
 	onPlayerNameChange,
-	initialLobbyData,
 }) => {
-	const [lobby, setLobby] = useState<LobbyState | null>(initialLobbyData || null);
 	const [isStarting, setIsStarting] = useState(false);
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [tempPlayerName, setTempPlayerName] = useState(playerName);
 	const [copySuccess, setCopySuccess] = useState(false);
+	
+	// Use the useGame hook to get lobby data
+	const { game: lobby, loading, error } = useGame(gameId);
+	
+	// Handle game start transition
 	useEffect(() => {
-		// Set up subscription with optional delay for initial data
-		const delay = initialLobbyData ? 3000 : 0; // 3 second delay for hosts with initial data
-		let unsubscribe: (() => void) | null = null;
-		
-		const timer = setTimeout(() => {
-			unsubscribe = subscribeToLobby(
-				gameId,
-				(lobbyData: SetStateAction<LobbyState | null>) => {
-					if (lobbyData && typeof lobbyData !== "function") {
-						setLobby(lobbyData);
-						if ("players" in lobbyData && Array.isArray(lobbyData.players)) {
-							// The players array may be typed as Omit<Player, ...>, so we can't use (p: Player)
-							const player = lobbyData.players.find(
-								(p: { id: string; name: string }) => p.id === playerId,
-							);
-							if (player && player.name !== playerName) {
-								onPlayerNameChange(player.name);
-							}
-						}
-					} else if (lobbyData === null) {
-						// Lobby disappeared - game has started
-						onGameStart();
-					}
-				},
-			);
-		}, delay);
-		
-		// Cleanup function
-		return () => {
-			clearTimeout(timer);
-			if (unsubscribe) {
-				unsubscribe();
+		if (lobby && lobby.phase !== 'lobby') {
+			onGameStart();
+		}
+	}, [lobby, onGameStart]);
+	
+	// Update player name when lobby data changes
+	useEffect(() => {
+		if (lobby && lobby.phase === 'lobby') {
+			const player = lobby.players.find(p => p.id === playerId);
+			if (player && player.name !== playerName) {
+				onPlayerNameChange(player.name);
 			}
-		};
-	}, [gameId, playerId, playerName, onPlayerNameChange, onGameStart, initialLobbyData]);
+		}
+	}, [lobby, playerId, playerName, onPlayerNameChange]);
 
 	useEffect(() => {
 		setTempPlayerName(playerName);
@@ -127,10 +104,25 @@ export const Lobby: React.FC<LobbyProps> = ({
 			setCopySuccess(true);
 			setTimeout(() => setCopySuccess(false), 2000);
 		}
-		
 	};
 
-	if (!lobby) {
+	if (loading) {
+		return (
+			<div className="lobby-container">
+				<div className="loading">Loading lobby...</div>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="lobby-container">
+				<div className="error">Error: {error}</div>
+			</div>
+		);
+	}
+
+	if (!lobby || lobby.phase !== 'lobby') {
 		return (
 			<div className="lobby-container">
 				<div className="loading">Loading lobby...</div>

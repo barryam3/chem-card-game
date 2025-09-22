@@ -26,12 +26,18 @@ export function getMassGroup(element: ChemistryElement): number {
   return Math.ceil(element.atomicMass / 100);
 }
 
-/** Calculate mass group from atomic number by looking up the element. */
-export function getMassGroupFromAtomicNumber(atomicNumber: number): number {
-  const element = gameData.find(e => e.atomicNumber === atomicNumber);
+/** Get element by atomic number using efficient lookup. */
+export function getElementByAtomicNumber(atomicNumber: number): ChemistryElement {
+  const element = elementLookup[atomicNumber];
   if (!element) {
     throw new Error(`Element with atomic number ${atomicNumber} not found`);
   }
+  return element;
+}
+
+/** Calculate mass group from atomic number by looking up the element. */
+export function getMassGroupFromAtomicNumber(atomicNumber: number): number {
+  const element = getElementByAtomicNumber(atomicNumber);
   return getMassGroup(element);
 }
 
@@ -811,3 +817,9 @@ export const gameData: ReadonlyArray<Readonly<ChemistryElement>> = [
     family: "Actinide",
   },
 ];
+
+/** Efficient lookup table mapping atomic number to element. */
+const elementLookup: Record<number, ChemistryElement> = gameData.reduce((acc, element) => {
+  acc[element.atomicNumber] = element;
+  return acc;
+}, {} as Record<number, ChemistryElement>);
