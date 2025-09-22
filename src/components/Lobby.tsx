@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DocumentReference } from "firebase/firestore";
 import { useGame } from "../hooks/useGame";
 import { startGame, updatePlayerName } from "../firebaseService";
 import { getGameUrl } from "../utils/urlUtils";
@@ -10,6 +11,7 @@ interface LobbyProps {
 	playerId: string;
 	isHost: boolean;
 	playerName: string;
+	gameDocRef: DocumentReference | null;
 	onGameStart: () => void;
 	onPlayerNameChange: (newName: string) => void;
 }
@@ -19,6 +21,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 	playerId,
 	isHost,
 	playerName,
+	gameDocRef,
 	onGameStart,
 	onPlayerNameChange,
 }) => {
@@ -52,10 +55,10 @@ export const Lobby: React.FC<LobbyProps> = ({
 	}, [playerName]);
 
 	const handleStartGame = async () => {
-		if (!isHost || !lobby || lobby.players.length < 2) return;
+		if (!isHost || !lobby || lobby.players.length < 2 || !gameDocRef) return;
 
 		setIsStarting(true);
-		const success = await startGame(gameId);
+		const success = await startGame(gameDocRef, lobby);
 		if (success) {
 			onGameStart();
 		} else {
@@ -69,9 +72,9 @@ export const Lobby: React.FC<LobbyProps> = ({
 	};
 
 	const handleNameSave = async () => {
-		if (tempPlayerName.trim()) {
+		if (tempPlayerName.trim() && lobby && gameDocRef) {
 			const newName = tempPlayerName.trim();
-			const success = await updatePlayerName(gameId, playerId, newName);
+			const success = await updatePlayerName(gameDocRef, lobby, playerId, newName);
 			if (success) {
 				savePlayerName(newName);
 				onPlayerNameChange(newName);
