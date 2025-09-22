@@ -3,8 +3,8 @@ import { GameSetup } from './components/GameSetup';
 import { Lobby } from './components/Lobby';
 import { DraftingPhase } from './components/DraftingPhase';
 import { ScoringPhase } from './components/ScoringPhase';
-import type { GameState } from './types';
-import { subscribeToGame, subscribeToLobby, cleanupOldGames } from './firebaseService';
+import type { GameState, LobbyState } from './types';
+import { subscribeToGame, subscribeToLobby } from './firebaseService';
 import { getGameIdFromUrl, getPlayerIdFromUrl, clearUrlParams } from './utils/urlUtils';
 import { saveGameState, clearGameState } from './utils/storageUtils';
 import './App.scss';
@@ -20,7 +20,7 @@ function App() {
   const [game, setGame] = useState<GameState | null>(null);
   const [isRestoring, setIsRestoring] = useState(true);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
-  const [initialLobbyData, setInitialLobbyData] = useState<any>(null);
+  const [initialLobbyData, setInitialLobbyData] = useState<LobbyState | null>(null);
 
   // Restore game state from URL or localStorage on app load
   useEffect(() => {
@@ -110,7 +110,7 @@ function App() {
 
   // Remove duplicate lobby subscription - the Lobby component handles this
 
-  const handleJoinLobby = (newGameId: string, newPlayerId: string, newIsHost: boolean, newPlayerName: string, lobbyData?: any) => {
+  const handleJoinLobby = (newGameId: string, newPlayerId: string, newIsHost: boolean, newPlayerName: string, lobbyData?: LobbyState) => {
     // Set flag to prevent restoration logic from interfering
     setIsCreatingGame(true);
     

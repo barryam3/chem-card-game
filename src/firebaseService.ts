@@ -58,8 +58,8 @@ export async function createLobby(): Promise<{
   playerId: string;
   lobbyData: LobbyState;
 }> {
-  console.log('🔥 createLobby: Starting lobby creation');
-  
+  console.log("🔥 createLobby: Starting lobby creation");
+
   // Temporarily disable cleanup to test request count
   // await cleanupOldGames();
 
@@ -85,9 +85,9 @@ export async function createLobby(): Promise<{
     ttl: ttlTimestamp, // TTL field for future use
   };
 
-  console.log('🔥 createLobby: Adding document to Firestore');
+  console.log("🔥 createLobby: Adding document to Firestore");
   await addDoc(collection(db, LOBBIES_COLLECTION), lobbyData);
-  console.log('🔥 createLobby: Document added successfully');
+  console.log("🔥 createLobby: Document added successfully");
 
   // Track usage for monitoring
   trackUsage.lobbyCreated();
@@ -127,10 +127,10 @@ export async function joinLobby(
     if (!freshDoc.exists()) {
       throw new Error("Lobby document no longer exists");
     }
-    
+
     const freshData = freshDoc.data() as LobbyState;
     const updatedPlayers = [...freshData.players, newPlayer];
-    
+
     transaction.update(lobbyDoc.ref, {
       players: updatedPlayers,
     });
@@ -249,7 +249,6 @@ export function subscribeToLobby(
   gameId: string,
   callback: (lobby: LobbyState | null) => void
 ) {
-  
   const lobbiesQuery = query(
     collection(db, LOBBIES_COLLECTION),
     where("id", "==", gameId)

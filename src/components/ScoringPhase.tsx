@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import type { GameState, GameScore } from '../types';
 import { Card } from './Card';
 import { calculateTotalScore, calculateWordSpellingPoints, getDeckConfig, getElementByAtomicNumber } from '../gameLogic';
@@ -10,14 +10,12 @@ interface ScoringPhaseProps {
 }
 
 export const ScoringPhase: React.FC<ScoringPhaseProps> = ({ game, currentPlayerId }) => {
-  const [scores, setScores] = useState<{ [playerId: string]: GameScore }>({});
-  
   // Determine if radioactivity scoring should be shown (only for 7+ players with 103-card deck)
   const { deckSize } = getDeckConfig(game.players.length);
   const showRadioactivity = deckSize === 103;
 
-  useEffect(() => {
-    // Calculate scores for all players
+  // Calculate scores for all players using useMemo for better performance
+  const scores = useMemo(() => {
     const calculatedScores: { [playerId: string]: GameScore } = {};
     
     game.players.forEach((player, index) => {
@@ -36,7 +34,7 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({ game, currentPlayerI
       );
     });
     
-    setScores(calculatedScores);
+    return calculatedScores;
   }, [game, showRadioactivity]);
 
 
