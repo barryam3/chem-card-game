@@ -8,6 +8,7 @@ import {
   query,
   where,
   Timestamp,
+  runTransaction,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { GameState, LobbyState, Player } from "./types";
@@ -55,9 +56,12 @@ async function cleanupOldGames(): Promise<void> {
 export async function createLobby(): Promise<{
   gameId: string;
   playerId: string;
+  lobbyData: LobbyState;
 }> {
-  // Clean up old games and lobbies before creating new ones
-  await cleanupOldGames();
+  console.log('🔥 createLobby: Starting lobby creation');
+  
+  // Temporarily disable cleanup to test request count
+  // await cleanupOldGames();
 
   const gameId = generateGameId();
   const hostId = Math.random().toString(36).substring(2, 15);
@@ -81,12 +85,14 @@ export async function createLobby(): Promise<{
     ttl: ttlTimestamp, // TTL field for future use
   };
 
+  console.log('🔥 createLobby: Adding document to Firestore');
   await addDoc(collection(db, LOBBIES_COLLECTION), lobbyData);
+  console.log('🔥 createLobby: Document added successfully');
 
   // Track usage for monitoring
   trackUsage.lobbyCreated();
 
-  return { gameId, playerId: hostId };
+  return { gameId, playerId: hostId, lobbyData };
 }
 
 // Join an existing lobby
@@ -115,8 +121,19 @@ export async function joinLobby(
     isHost: false,
   };
 
-  await updateDoc(lobbyDoc.ref, {
-    players: [...lobbyData.players, newPlayer],
+  // Use transaction to ensure atomic update
+  await runTransaction(db, async (transaction) => {
+    const freshDoc = await transaction.get(lobbyDoc.ref);
+    if (!freshDoc.exists()) {
+      throw new Error("Lobby document no longer exists");
+    }
+    
+    const freshData = freshDoc.data() as LobbyState;
+    const updatedPlayers = [...freshData.players, newPlayer];
+    
+    transaction.update(lobbyDoc.ref, {
+      players: updatedPlayers,
+    });
   });
 
   // Track usage for monitoring
@@ -232,6 +249,7 @@ export function subscribeToLobby(
   gameId: string,
   callback: (lobby: LobbyState | null) => void
 ) {
+  
   const lobbiesQuery = query(
     collection(db, LOBBIES_COLLECTION),
     where("id", "==", gameId)
