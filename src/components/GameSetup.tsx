@@ -1,25 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import type { LobbyState } from '../types';
 import { createLobby, joinLobby } from '../firebaseService';
 import { getGameIdFromUrl, setGameIdInUrl, setPlayerIdInUrl } from '../utils/urlUtils';
 import './GameSetup.scss';
 
 interface GameSetupProps {
-	onJoinLobby: (gameId: string, playerId: string, isHost: boolean, playerName: string, lobbyData?: any) => void;
+	onJoinLobby: (gameId: string, playerId: string, isHost: boolean, playerName: string, lobbyData?: LobbyState) => void;
 }
 
 export const GameSetup: React.FC<GameSetupProps> = ({ onJoinLobby }) => {
-  const [gameId, setGameId] = useState('');
+  // Initialize gameId from URL on first render
+  const [gameId, setGameId] = useState(() => getGameIdFromUrl() || '');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    // Auto-populate game ID from URL
-    const urlGameId = getGameIdFromUrl();
-    if (urlGameId) {
-      setGameId(urlGameId);
-    }
-  }, []);
 
   const handleCreateGame = async () => {
     setIsCreating(true);
