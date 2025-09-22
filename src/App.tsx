@@ -110,7 +110,10 @@ function App() {
             playerId={playerId}
             isHost={isHost}
             playerName={playerName}
+            lobby={game}
             gameDocRef={gameDocRef}
+            loading={gameLoading}
+            error={gameError}
             onGameStart={handleGameStart}
             onPlayerNameChange={handlePlayerNameChange}
           />
