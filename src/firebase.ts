@@ -36,7 +36,15 @@ export const db = getFirestore(app);
 // Connect to emulator in development
 if (import.meta.env.DEV) {
   try {
-    connectFirestoreEmulator(db, "localhost", 8080);
+    connectFirestoreEmulator(
+      db,
+      "localhost",
+      // If HTTPS is enabled, the Vite dev server proxies requests to the
+      // Firestore emulator to support HTTP/2.
+      window.location.protocol === "http" ? 8080 : Number(window.location.port)
+    );
+    // @ts-expect-error - https://github.com/firebase/firebase-tools/issues/1908
+    db._settings.ssl = true;
   } catch (error) {
     console.warn(
       "⚠️ Could not connect to Firestore emulator:",
