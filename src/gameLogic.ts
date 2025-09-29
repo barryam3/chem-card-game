@@ -3,13 +3,19 @@ import type { ChemistryElement } from "./data";
 import type { GameScore } from "./types";
 
 // Helper function to get element by atomic number
-export function getElementByAtomicNumber(atomicNumber: number): ChemistryElement | undefined {
-  return gameData.find(element => element.atomicNumber === atomicNumber);
+export function getElementByAtomicNumber(
+  atomicNumber: number
+): ChemistryElement | undefined {
+  return gameData.find((element) => element.atomicNumber === atomicNumber);
 }
 
 // Helper function to convert atomic numbers to elements
-export function getElementsFromAtomicNumbers(atomicNumbers: number[]): ChemistryElement[] {
-  return atomicNumbers.map(num => getElementByAtomicNumber(num)).filter((el): el is ChemistryElement => el !== undefined);
+export function getElementsFromAtomicNumbers(
+  atomicNumbers: number[]
+): ChemistryElement[] {
+  return atomicNumbers
+    .map((num) => getElementByAtomicNumber(num))
+    .filter((el): el is ChemistryElement => el !== undefined);
 }
 
 // Shuffle array using Fisher-Yates algorithm
@@ -58,7 +64,11 @@ export function dealCards(players: number): number[][] {
     const startIndex = i * handSize;
     const endIndex = startIndex + handSize;
     // Extract atomic numbers instead of full elements
-    hands.push(shuffledDeck.slice(startIndex, endIndex).map(element => element.atomicNumber));
+    hands.push(
+      shuffledDeck
+        .slice(startIndex, endIndex)
+        .map((element) => element.atomicNumber)
+    );
   }
 
   return hands;
@@ -94,9 +104,14 @@ export function calculateAtomicMassScore(
 ): number {
   const playerElements = getElementsFromAtomicNumbers(playerAtomicNumbers);
   const leftElements = getElementsFromAtomicNumbers(leftNeighborAtomicNumbers);
-  const rightElements = getElementsFromAtomicNumbers(rightNeighborAtomicNumbers);
+  const rightElements = getElementsFromAtomicNumbers(
+    rightNeighborAtomicNumbers
+  );
 
-  const playerMass = playerElements.reduce((sum, card) => sum + getMassGroup(card), 0);
+  const playerMass = playerElements.reduce(
+    (sum, card) => sum + getMassGroup(card),
+    0
+  );
   const leftMass = leftElements.reduce(
     (sum, card) => sum + getMassGroup(card),
     0
@@ -213,30 +228,32 @@ export function calculateWordSpellingPoints(
   wordSpellingWinners: { playerId: string; round: number }[]
 ): number {
   if (wordSpellingWinners.length === 0) return 0;
-  
+
   // Group winners by round
   const winnersByRound = wordSpellingWinners.reduce((acc, winner) => {
     if (!acc[winner.round]) acc[winner.round] = [];
     acc[winner.round].push(winner);
     return acc;
   }, {} as Record<number, typeof wordSpellingWinners>);
-  
-  const sortedRounds = Object.keys(winnersByRound).map(Number).sort((a, b) => a - b);
+
+  const sortedRounds = Object.keys(winnersByRound)
+    .map(Number)
+    .sort((a, b) => a - b);
   const pointValues = [8, 5, 2];
   let currentPointIndex = 0;
-  
+
   for (const round of sortedRounds) {
     const roundWinners = winnersByRound[round];
     const points = pointValues[currentPointIndex] || 0;
-    
+
     // Check if this player is in this round's winners
-    if (roundWinners.some(winner => winner.playerId === playerId)) {
+    if (roundWinners.some((winner) => winner.playerId === playerId)) {
       return points;
     }
-    
+
     currentPointIndex += roundWinners.length; // Skip next places if multiple winners
   }
-  
+
   return 0;
 }
 
@@ -255,7 +272,9 @@ export function calculateTotalScore(
     rightNeighborAtomicNumbers
   );
   const atomicSymbol = wordSpellingBonus;
-  const radioactivity = includeRadioactivity ? calculateRadioactivityScore(playerAtomicNumbers) : 0;
+  const radioactivity = includeRadioactivity
+    ? calculateRadioactivityScore(playerAtomicNumbers)
+    : 0;
   const ionization = calculateIonizationScore(playerAtomicNumbers);
   const family = calculateFamilyScore(playerAtomicNumbers);
 

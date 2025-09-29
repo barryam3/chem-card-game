@@ -83,23 +83,14 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 			setWordError("");
 
 			try {
-				const success = await checkWordSpelling(
-					gameDocRef,
-					game,
-					currentPlayerId,
-					wordInput,
+				await checkWordSpelling(gameDocRef, game, currentPlayerId, wordInput);
+				setWordInput("");
+			} catch (error: unknown) {
+				setWordError(
+					error instanceof Error
+						? error.message
+						: "Error. Try refreshing the page.",
 				);
-				if (success) {
-					setWordInput("");
-					// Don't need to set any local state - the game state will update via subscription
-				} else {
-					setWordError(
-						"Cannot spell this word with your drafted cards, or you have already submitted a word.",
-					);
-				}
-			} catch (error) {
-				setWordError("Failed to submit word. Please try again.");
-				console.error("Word submission error:", error);
 			} finally {
 				setWordSubmitting(false);
 			}
@@ -168,10 +159,11 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 								const revealedCards = revealedAtomicNumbers
 									.map((num) => getElementByAtomicNumber(num))
 									.filter((el): el is ChemistryElement => el !== undefined);
+								const symbolLengths = revealedCards.map(
+									(c) => c.atomicSymbol.length,
+								);
 								const hasEnoughLetters =
-									revealedCards
-										.map((c) => c.atomicSymbol.length)
-										.reduce((a, b) => a + b, 0) >= 5;
+									symbolLengths.reduce((a, b) => a + b, 0) >= 5;
 								const hasWon = game.wordSpellingWinners.some(
 									(winner) => winner.playerId === currentPlayerId,
 								);

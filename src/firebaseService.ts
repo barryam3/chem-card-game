@@ -243,35 +243,30 @@ export async function submitDraftSelection(
   return true;
 }
 
+let words: Set<string> | undefined;
+
 // Check for word spelling and update winners
 export async function checkWordSpelling(
   gameDocRef: DocumentReference,
   gameData: GameState,
   playerId: string,
   word: string
-): Promise<boolean> {
-  // Validate word length and format
-  if (!word || word.length !== 5 || !/^[A-Za-z]+$/.test(word)) {
-    throw new Error(
-      "Word must be exactly 5 letters and contain only alphabetic characters"
-    );
+): Promise<void> {
+  // Validate word length.
+  if (!word || word.length !== 5) {
+    throw new Error("Word must be exactly 5 letters");
   }
 
   const player = gameData.players.find((p) => p.id === playerId);
   if (!player) {
-    return false;
+    throw new Error("Error. Try refreshing the page.");
   }
 
   // Check if player already won word spelling
   if (
     gameData.wordSpellingWinners.some((winner) => winner.playerId === playerId)
   ) {
-    return false;
-  }
-
-  // Check if word can be spelled with player's atomic symbols
-  if (word.length !== 5) {
-    return false;
+    throw new Error("You have already spelled a word.");
   }
 
   // Only allow using cards that have been revealed (drafted in previous rounds)
@@ -280,7 +275,17 @@ export async function checkWordSpelling(
 
   // Check if the player can spell this word with their revealed cards only
   if (!canSpellWord(revealedCards, word)) {
-    return false;
+    throw new Error("Cannot spell this word with your drafted cards.");
+  }
+
+  if (!words) {
+    const res = await fetch("/assets/words.txt");
+    const text = await res.text();
+    words = new Set(text.split("\n"));
+  }
+
+  if (!words.has(word)) {
+    throw new Error("This word is not in our dictionary.");
   }
 
   // Add player to winners list with current round
@@ -291,6 +296,4 @@ export async function checkWordSpelling(
   await updateDoc(gameDocRef, {
     wordSpellingWinners: updatedWinners,
   });
-
-  return true;
 }
