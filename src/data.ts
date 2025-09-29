@@ -21,13 +21,15 @@ export interface ChemistryElement {
   negativeIon?: number;
 }
 
-/** Calculate mass group by dividing atomic mass by 100 and rounding up. */
+/** Calculate mass group by dividing atomic mass by 50 and rounding up, but max of 5 */
 export function getMassGroup(element: ChemistryElement): number {
-  return Math.ceil(element.atomicMass / 100);
+  return Math.min(Math.ceil(element.atomicMass / 50), 5);
 }
 
 /** Get element by atomic number using efficient lookup. */
-export function getElementByAtomicNumber(atomicNumber: number): ChemistryElement {
+export function getElementByAtomicNumber(
+  atomicNumber: number
+): ChemistryElement {
   const element = elementLookup[atomicNumber];
   if (!element) {
     throw new Error(`Element with atomic number ${atomicNumber} not found`);
@@ -819,7 +821,10 @@ export const gameData: ReadonlyArray<Readonly<ChemistryElement>> = [
 ];
 
 /** Efficient lookup table mapping atomic number to element. */
-const elementLookup: Record<number, ChemistryElement> = gameData.reduce((acc, element) => {
-  acc[element.atomicNumber] = element;
-  return acc;
-}, {} as Record<number, ChemistryElement>);
+const elementLookup: Record<number, ChemistryElement> = gameData.reduce(
+  (acc, element) => {
+    acc[element.atomicNumber] = element;
+    return acc;
+  },
+  {} as Record<number, ChemistryElement>
+);

@@ -121,6 +121,8 @@
     flex-direction: row;
     gap: 2px;
     align-items: center;
+    width: 100%;
+    justify-content: space-evenly;
     
     .mass-symbol {
       font-size: 12px; // For emoji fallback
@@ -131,8 +133,6 @@
       
       // Style the SVG icons
       img {
-        width: 14px;
-        height: 14px;
         opacity: 0.8;
       }
     }
