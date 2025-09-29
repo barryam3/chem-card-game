@@ -253,8 +253,8 @@ export async function checkWordSpelling(
   word: string
 ): Promise<void> {
   // Validate word length.
-  if (!word || word.length !== 5) {
-    throw new Error("Word must be exactly 5 letters");
+  if (!word || word.length < 5) {
+    throw new Error("Word must be at least 5 letters");
   }
 
   const player = gameData.players.find((p) => p.id === playerId);

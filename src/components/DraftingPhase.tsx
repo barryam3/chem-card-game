@@ -78,7 +78,7 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 
 	const handleWordSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (wordInput.length === 5 && !wordSubmitting && gameDocRef) {
+		if (wordInput.length >= 5 && !wordSubmitting && gameDocRef) {
 			setWordSubmitting(true);
 			setWordError("");
 
@@ -101,6 +101,60 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 	// Each player should have at least as many drafted cards as the current round number
 	const allPlayersReady = game.players.every(
 		(player) => player.draftedCards.length >= game.currentRound,
+	);
+
+	// Group winners by round and assign points correctly
+	const winnersByRound = game.wordSpellingWinners.reduce(
+		(acc, winner) => {
+			if (!acc[winner.round]) acc[winner.round] = [];
+			acc[winner.round].push(winner);
+			return acc;
+		},
+		{} as Record<number, typeof game.wordSpellingWinners>,
+	);
+
+	const sortedRounds = Object.keys(winnersByRound)
+		.map(Number)
+		.sort((a, b) => a - b);
+	const pointValues = [8, 5, 2];
+	let currentPointIndex = 0;
+
+	// Create array of all winners with their points
+	const allWinners = sortedRounds.flatMap((round) => {
+		const roundWinners = winnersByRound[round];
+		const points = pointValues[currentPointIndex] || 0;
+		currentPointIndex += roundWinners.length; // Skip next places if multiple winners
+
+		return roundWinners.map((winner) => {
+			const player = game.players.find((p) => p.id === winner.playerId);
+			return {
+				...winner,
+				playerName: player?.name || "Unknown",
+				points,
+				round,
+			};
+		});
+	});
+
+	const winnerPointsThisRound = allWinners.find(
+		(winner) => winner.round === game.currentRound,
+	)?.points;
+
+	// Create placeholders only for available places
+	const placeholders = pointValues.map((points, index) => {
+		const place = index + 1;
+		const label =
+			place === 1 ? "1st Place" : place === 2 ? "2nd Place" : "3rd Place";
+		return {
+			place,
+			points,
+			label,
+			isAvailable:
+				place > allWinners.length || points === winnerPointsThisRound,
+		};
+	});
+	const canWinWordRace = placeholders.some(
+		(placeholder) => placeholder.isAvailable,
 	);
 
 	return (
@@ -146,131 +200,73 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 				<div className="word-spelling-section">
 					<h3>Word Race:</h3>
 					<div className="word-spelling-content">
-						<div className="word-form-section">
-							<p className="drafting-info">
-								Be among the first players to spell a 5-letter word with your
-								atomic symbols.
-							</p>
-							{(() => {
-								const revealedAtomicNumbers = currentPlayer.draftedCards.slice(
-									0,
-									game.currentRound - 1,
-								);
-								const revealedCards = revealedAtomicNumbers
-									.map((num) => getElementByAtomicNumber(num))
-									.filter((el): el is ChemistryElement => el !== undefined);
-								const symbolLengths = revealedCards.map(
-									(c) => c.atomicSymbol.length,
-								);
-								const hasEnoughLetters =
-									symbolLengths.reduce((a, b) => a + b, 0) >= 5;
-								const hasWon = game.wordSpellingWinners.some(
-									(winner) => winner.playerId === currentPlayerId,
-								);
-
-								if (hasWon) {
-									return (
-										<div className="word-success">
-											✓ You have successfully submitted a word and earned
-											points!
-										</div>
+						{canWinWordRace && (
+							<div className="word-form-section">
+								<p className="drafting-info">
+									Be among the first players to spell a word with your atomic
+									symbols that has at least 5 letters.
+								</p>
+								{(() => {
+									const revealedAtomicNumbers =
+										currentPlayer.draftedCards.slice(0, game.currentRound - 1);
+									const revealedCards = revealedAtomicNumbers
+										.map((num) => getElementByAtomicNumber(num))
+										.filter((el): el is ChemistryElement => el !== undefined);
+									const symbolLengths = revealedCards.map(
+										(c) => c.atomicSymbol.length,
 									);
-								}
+									const hasEnoughLetters =
+										symbolLengths.reduce((a, b) => a + b, 0) >= 5;
+									const hasWon = game.wordSpellingWinners.some(
+										(winner) => winner.playerId === currentPlayerId,
+									);
 
-								return (
-									<form onSubmit={handleWordSubmit} className="word-form">
-										<div className="word-input-group">
-											<input
-												id="wordInput"
-												type="text"
-												value={wordInput}
-												onChange={(e) =>
-													setWordInput(e.target.value.toUpperCase())
-												}
-												placeholder={
-													hasEnoughLetters
-														? "Enter 5-letter word"
-														: "Get 5 letters to spell a word"
-												}
-												maxLength={5}
-												disabled={wordSubmitting || !hasEnoughLetters}
-											/>
-											<button
-												type="submit"
-												disabled={wordInput.length !== 5 || wordSubmitting}
-											>
-												{wordSubmitting ? "Checking..." : "Submit Word"}
-											</button>
-										</div>
-										{wordError && <div className="word-error">{wordError}</div>}
-									</form>
-								);
-							})()}
-						</div>
+									if (hasWon) {
+										return (
+											<div className="word-success">
+												✓ You have successfully submitted a word and earned
+												points!
+											</div>
+										);
+									}
+
+									return (
+										<form onSubmit={handleWordSubmit} className="word-form">
+											<div className="word-input-group">
+												<input
+													id="wordInput"
+													type="text"
+													value={wordInput}
+													onChange={(e) =>
+														setWordInput(e.target.value.toUpperCase())
+													}
+													placeholder={
+														hasEnoughLetters
+															? "Enter a word"
+															: "Get 5 letters to spell a word"
+													}
+													disabled={wordSubmitting || !hasEnoughLetters}
+												/>
+												<button
+													type="submit"
+													disabled={wordInput.length < 5 || wordSubmitting}
+												>
+													{wordSubmitting ? "Checking..." : "Submit Word"}
+												</button>
+											</div>
+											{wordError && (
+												<div className="word-error">{wordError}</div>
+											)}
+										</form>
+									);
+								})()}
+							</div>
+						)}
 
 						{/* Word Winners - Right Side */}
 						<div className="word-winners-section">
 							<div className="word-winners-grid">
 								{(() => {
-									// Group winners by round and assign points correctly
-									const winnersByRound = game.wordSpellingWinners.reduce(
-										(acc, winner) => {
-											if (!acc[winner.round]) acc[winner.round] = [];
-											acc[winner.round].push(winner);
-											return acc;
-										},
-										{} as Record<number, typeof game.wordSpellingWinners>,
-									);
-
-									const sortedRounds = Object.keys(winnersByRound)
-										.map(Number)
-										.sort((a, b) => a - b);
-									const pointValues = [8, 5, 2];
-									let currentPointIndex = 0;
-
-									// Create array of all winners with their points
-									const allWinners = sortedRounds.flatMap((round) => {
-										const roundWinners = winnersByRound[round];
-										const points = pointValues[currentPointIndex] || 0;
-										currentPointIndex += roundWinners.length; // Skip next places if multiple winners
-
-										return roundWinners.map((winner) => {
-											const player = game.players.find(
-												(p) => p.id === winner.playerId,
-											);
-											return {
-												...winner,
-												playerName: player?.name || "Unknown",
-												points,
-												round,
-											};
-										});
-									});
-
-									const allPointValues = [8, 5, 2];
-									const winnerPointsThisRound = allWinners.find(
-										(winner) => winner.round === game.currentRound,
-									)?.points;
-
-									// Create placeholders only for available places
-									const placeholders = allPointValues.map((points, index) => {
-										const place = index + 1;
-										const label =
-											place === 1
-												? "1st Place"
-												: place === 2
-													? "2nd Place"
-													: "3rd Place";
-										return {
-											place,
-											points,
-											label,
-											isAvailable:
-												place > allWinners.length ||
-												points === winnerPointsThisRound,
-										};
-									});
-
 									return placeholders.map((placeholder) => {
 										// Find winners for this place
 										const winnersForPlace = allWinners.filter(
@@ -283,9 +279,6 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 												className="word-winner-place"
 											>
 												<div className="place-label">{placeholder.label}</div>
-												<div className="place-points">
-													{placeholder.points} pts
-												</div>
 												<div className="place-winners">
 													{winnersForPlace.length > 0 ? (
 														winnersForPlace.map((winner) => (
