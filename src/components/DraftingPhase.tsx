@@ -247,12 +247,29 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 										});
 									});
 
-									// Create placeholders for 1st, 2nd, 3rd place
-									const placeholders = [
-										{ place: 1, points: 8, label: "1st Place" },
-										{ place: 2, points: 5, label: "2nd Place" },
-										{ place: 3, points: 2, label: "3rd Place" },
-									];
+									const allPointValues = [8, 5, 2];
+									const winnerPointsThisRound = allWinners.find(
+										(winner) => winner.round === game.currentRound,
+									)?.points;
+
+									// Create placeholders only for available places
+									const placeholders = allPointValues.map((points, index) => {
+										const place = index + 1;
+										const label =
+											place === 1
+												? "1st Place"
+												: place === 2
+													? "2nd Place"
+													: "3rd Place";
+										return {
+											place,
+											points,
+											label,
+											isAvailable:
+												place > allWinners.length ||
+												points === winnerPointsThisRound,
+										};
+									});
 
 									return placeholders.map((placeholder) => {
 										// Find winners for this place
@@ -280,7 +297,11 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 															</div>
 														))
 													) : (
-														<div className="place-empty">Available</div>
+														<div className="place-empty">
+															{placeholder.isAvailable
+																? "Unclaimed"
+																: "Claimed"}
+														</div>
 													)}
 												</div>
 											</div>
