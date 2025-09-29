@@ -3,6 +3,7 @@ import { GameSetup } from './components/GameSetup';
 import { Lobby } from './components/Lobby';
 import { DraftingPhase } from './components/DraftingPhase';
 import { ScoringPhase } from './components/ScoringPhase';
+import { RulesModal } from './components/RulesModal';
 import { useGame } from './hooks/useGame';
 import { getGameIdFromUrl, getPlayerIdFromUrl, clearUrlParams } from './utils/urlUtils';
 import { saveGameState, clearGameState } from './utils/storageUtils';
@@ -23,6 +24,7 @@ function App() {
   });
   
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   
   // Only use the useGame hook when we have both gameId and playerId
   // If we only have gameId, we should show GameSetup with gameId pre-populated
@@ -175,11 +177,25 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>Chemistry Card Game</h1>
+        <button 
+          type="button"
+          className="help-button"
+          onClick={() => setIsRulesModalOpen(true)}
+          aria-label="View game rules"
+        >
+          ?
+        </button>
       </header>
       
       <main className="app-main">
         {renderCurrentView()}
       </main>
+
+      {/* Rules Modal */}
+      <RulesModal 
+        isOpen={isRulesModalOpen}
+        onClose={() => setIsRulesModalOpen(false)}
+      />
     </div>
   );
 }
