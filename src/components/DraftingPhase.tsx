@@ -246,6 +246,7 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 															: "Get 5 letters to spell a word"
 													}
 													disabled={wordSubmitting || !hasEnoughLetters}
+													autoComplete="off"
 												/>
 												<button
 													type="submit"
