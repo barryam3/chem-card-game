@@ -28,11 +28,9 @@
     gap: $spacing-xl;
   }
 
-  .hand-section {
-    h3 {
+  h3 {
       color: $text-primary;
-      margin-bottom: $spacing-md;
-    }
+      margin-bottom: $spacing-md;  
   }
 
   .hand {
@@ -50,9 +48,7 @@
     @include button-primary;
   }
 
-  .drafted-cards-section h3,
-  .my-drafted-cards-section h3,
-  .opponents-drafted-cards-section h3 {
+  .drafted-cards-section h3 {
     color: $text-primary;
     margin-bottom: $spacing-md;
   }
@@ -186,14 +182,20 @@
 
 /* Word Spelling Section */
 .word-spelling-section {
-  margin-bottom: $spacing-xl;
-  padding: $spacing-lg;
-  background: $bg-secondary;
-  border-radius: $border-radius-lg;
+  .word-spelling-content {
+    display: flex;
+    gap: $spacing-xl;
+    align-items: flex-start;
 
-  h3 {
-    color: $text-primary;
-    margin-bottom: $spacing-md;
+    @include mobile {
+      flex-direction: column;
+      gap: $spacing-lg;
+    }
+  }
+
+  .word-form-section {
+    flex: 1;
+    min-width: 0; // Allow flex item to shrink below content size
   }
 
   .word-form {
@@ -258,6 +260,73 @@
     background: rgba(108, 117, 125, 0.1);
     border-radius: $border-radius-sm;
     border-left: 4px solid #6c757d;
+  }
+
+  .word-winners-section {
+    flex: 1;
+    min-width: 0; // Allow flex item to shrink below content size
+
+    h4 {
+      color: $text-primary;
+      margin-bottom: $spacing-md;
+      font-size: $font-size-md;
+    }
+  }
+
+  .word-winners-grid {
+    display: flex;
+    flex-direction: row;
+    gap: $spacing-md;
+
+    @include mobile {
+      flex-direction: column;
+    }
+  }
+
+  .word-winner-place {
+    flex: 1;
+    padding: $spacing-md;
+    background: $bg-primary;
+    border-radius: $border-radius-md;
+    border: 1px solid rgba($primary-color, 0.2);
+
+    .place-label {
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+      font-size: $font-size-sm;
+      margin-bottom: $spacing-xs;
+    }
+
+    .place-points {
+      color: $primary-color;
+      font-weight: $font-weight-bold;
+      font-size: $font-size-lg;
+      margin-bottom: $spacing-sm;
+    }
+
+    .place-winners {
+      min-height: 1.5em; // Ensure consistent height
+    }
+
+    .word-winner {
+      padding: $spacing-xs $spacing-sm;
+      background: rgba($success-color, 0.1);
+      border-radius: $border-radius-sm;
+      color: $success-color;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      margin-bottom: $spacing-xs;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .place-empty {
+      color: $text-secondary;
+      font-style: italic;
+      font-size: $font-size-sm;
+    }
   }
 
   .word-winners {

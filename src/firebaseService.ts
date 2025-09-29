@@ -68,13 +68,10 @@ export async function joinLobby(
   }
 
   const gameDoc = querySnapshot.docs[0];
-  const gameData = gameDoc.data() as LobbyState;
 
   const playerId = Math.random().toString(36).substring(2, 15);
-  const playerNumber = gameData.players.length + 1;
-  const newPlayer: Omit<Player, "draftedCards" | "hand" | "score"> = {
+  const newPlayer: Omit<Player, "draftedCards" | "hand" | "score" | "name"> = {
     id: playerId,
-    name: `Player ${playerNumber}`,
     isHost: false,
   };
 
@@ -86,6 +83,7 @@ export async function joinLobby(
     }
 
     const freshData = freshDoc.data() as LobbyState;
+    (newPlayer as Player).name = `Player ${freshData.players.length + 1}`;
     const updatedPlayers = [...freshData.players, newPlayer];
 
     transaction.update(gameDoc.ref, {
@@ -173,7 +171,6 @@ export async function submitDraftSelection(
   playerId: string,
   cardIndex: number
 ): Promise<boolean> {
-
   const playerIndex = gameData.players.findIndex((p) => p.id === playerId);
   if (playerIndex === -1) {
     return false;

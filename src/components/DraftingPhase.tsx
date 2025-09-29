@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { DocumentReference } from "firebase/firestore";
-import type { GameState } from "../types";
+import type { GameState, Player } from "../types";
 import type { ChemistryElement } from "../data";
 import { Card } from "./Card";
 import { FaceDownCard } from "./FaceDownCard";
@@ -12,6 +12,12 @@ interface DraftingPhaseProps {
 	game: GameState;
 	gameDocRef: DocumentReference | null;
 	currentPlayerId: string;
+}
+
+function playersInOrder(players: Player[], currentPlayerIndex: number) {
+	return players
+		.slice(currentPlayerIndex)
+		.concat(players.slice(0, currentPlayerIndex));
 }
 
 export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
@@ -37,10 +43,13 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 		}
 	}, [game.currentRound]);
 
-	const currentPlayer = game.players.find((p) => p.id === currentPlayerId);
-	if (!currentPlayer) {
+	const currentPlayerIndex = game.players.findIndex(
+		(p) => p.id === currentPlayerId,
+	);
+	if (currentPlayerIndex === -1) {
 		return <div>Player not found</div>;
 	}
+	const currentPlayer = game.players[currentPlayerIndex];
 
 	// Check if current player has already submitted for this round
 	// They have submitted if they have at least as many drafted cards as the current round
@@ -143,14 +152,162 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 					</div>
 				</div>
 
-				<div className="my-drafted-cards-section">
-					<h3>Your Drafted Cards:</h3>
-					{(() => {
-						const revealedAtomicNumbers = currentPlayer.draftedCards.slice(
+				<div className="word-spelling-section">
+					<h3>Word Race:</h3>
+					<div className="word-spelling-content">
+						<div className="word-form-section">
+							<p className="drafting-info">
+								Be among the first players to spell a 5-letter word with your
+								atomic symbols.
+							</p>
+							{(() => {
+								const revealedAtomicNumbers = currentPlayer.draftedCards.slice(
+									0,
+									game.currentRound - 1,
+								);
+								const revealedCards = revealedAtomicNumbers
+									.map((num) => getElementByAtomicNumber(num))
+									.filter((el): el is ChemistryElement => el !== undefined);
+								const hasEnoughLetters =
+									revealedCards
+										.map((c) => c.atomicSymbol.length)
+										.reduce((a, b) => a + b, 0) >= 5;
+								const hasWon = game.wordSpellingWinners.some(
+									(winner) => winner.playerId === currentPlayerId,
+								);
+
+								if (hasWon) {
+									return (
+										<div className="word-success">
+											✓ You have successfully submitted a word and earned
+											points!
+										</div>
+									);
+								}
+
+								return (
+									<form onSubmit={handleWordSubmit} className="word-form">
+										<div className="word-input-group">
+											<input
+												id="wordInput"
+												type="text"
+												value={wordInput}
+												onChange={(e) =>
+													setWordInput(e.target.value.toUpperCase())
+												}
+												placeholder={
+													hasEnoughLetters
+														? "Enter 5-letter word"
+														: "Get 5 letters to spell a word"
+												}
+												maxLength={5}
+												disabled={wordSubmitting || !hasEnoughLetters}
+											/>
+											<button
+												type="submit"
+												disabled={wordInput.length !== 5 || wordSubmitting}
+											>
+												{wordSubmitting ? "Checking..." : "Submit Word"}
+											</button>
+										</div>
+										{wordError && <div className="word-error">{wordError}</div>}
+									</form>
+								);
+							})()}
+						</div>
+
+						{/* Word Winners - Right Side */}
+						<div className="word-winners-section">
+							<div className="word-winners-grid">
+								{(() => {
+									// Group winners by round and assign points correctly
+									const winnersByRound = game.wordSpellingWinners.reduce(
+										(acc, winner) => {
+											if (!acc[winner.round]) acc[winner.round] = [];
+											acc[winner.round].push(winner);
+											return acc;
+										},
+										{} as Record<number, typeof game.wordSpellingWinners>,
+									);
+
+									const sortedRounds = Object.keys(winnersByRound)
+										.map(Number)
+										.sort((a, b) => a - b);
+									const pointValues = [8, 5, 2];
+									let currentPointIndex = 0;
+
+									// Create array of all winners with their points
+									const allWinners = sortedRounds.flatMap((round) => {
+										const roundWinners = winnersByRound[round];
+										const points = pointValues[currentPointIndex] || 0;
+										currentPointIndex += roundWinners.length; // Skip next places if multiple winners
+
+										return roundWinners.map((winner) => {
+											const player = game.players.find(
+												(p) => p.id === winner.playerId,
+											);
+											return {
+												...winner,
+												playerName: player?.name || "Unknown",
+												points,
+												round,
+											};
+										});
+									});
+
+									// Create placeholders for 1st, 2nd, 3rd place
+									const placeholders = [
+										{ place: 1, points: 8, label: "1st Place" },
+										{ place: 2, points: 5, label: "2nd Place" },
+										{ place: 3, points: 2, label: "3rd Place" },
+									];
+
+									return placeholders.map((placeholder) => {
+										// Find winners for this place
+										const winnersForPlace = allWinners.filter(
+											(winner) => winner.points === placeholder.points,
+										);
+
+										return (
+											<div
+												key={placeholder.place}
+												className="word-winner-place"
+											>
+												<div className="place-label">{placeholder.label}</div>
+												<div className="place-points">
+													{placeholder.points} pts
+												</div>
+												<div className="place-winners">
+													{winnersForPlace.length > 0 ? (
+														winnersForPlace.map((winner) => (
+															<div
+																key={winner.playerId}
+																className="word-winner"
+															>
+																{winner.playerName} (Round {winner.round})
+															</div>
+														))
+													) : (
+														<div className="place-empty">Available</div>
+													)}
+												</div>
+											</div>
+										);
+									});
+								})()}
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className="drafted-cards-section">
+					<h3>Drafted Cards:</h3>
+					{playersInOrder(game.players, currentPlayerIndex).map((player, i) => {
+						const revealedAtomicNumbers = player.draftedCards.slice(
 							0,
 							game.currentRound - 1,
 						);
-						const unrevealedAtomicNumbers = currentPlayer.draftedCards.slice(
+						const unrevealedAtomicNumbers = player.draftedCards.slice(
 							game.currentRound - 1,
 						);
 						const revealedCards = revealedAtomicNumbers
@@ -160,8 +317,27 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 							.map((num) => getElementByAtomicNumber(num))
 							.filter((el): el is ChemistryElement => el !== undefined);
 
+						// Determine the player's position in the turn order
+						const isCurrentPlayer = player.id === currentPlayerId;
+						const isReceivingFromYou = i === 1; // Next player after current player
+						const isPassingToYou = i === game.players.length - 1; // Last player in order
+
+						let playerLabel = player.name;
+						if (isCurrentPlayer) {
+							playerLabel += " (You)";
+						} else if (isReceivingFromYou) {
+							playerLabel += " (Receiving from you)";
+						} else if (isPassingToYou) {
+							playerLabel += " (Passing to you)";
+						}
+
 						return (
-							<div className="player-drafted-cards current-player-section">
+							<div
+								key={player.id}
+								className={`player-drafted-cards ${isCurrentPlayer ? "current-player-section" : ""}`}
+							>
+								<h4 className="player-name">{playerLabel}</h4>
+
 								{(revealedCards.length > 0 || unrevealedCards.length > 0) && (
 									<div className="card-group">
 										<div className="drafted-cards">
@@ -170,197 +346,43 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 												.sort((a, b) => a.atomicNumber - b.atomicNumber)
 												.map((element, index) => (
 													<Card
-														key={`${currentPlayerId}-revealed-${element.atomicNumber}-${index}`}
+														key={`${player.id}-revealed-${element.atomicNumber}-${index}`}
 														element={element}
 													/>
 												))}
 
-											{/* Show unrevealed cards with dimmed styling */}
-											{unrevealedCards.length > 0 && (
-												<div className="unrevealed-cards">
-													{unrevealedCards
-														.sort((a, b) => a.atomicNumber - b.atomicNumber)
-														.map((element, index) => (
-															<Card
-																key={`${currentPlayerId}-unrevealed-${element.atomicNumber}-${index}`}
-																element={element}
-															/>
-														))}
-												</div>
-											)}
-										</div>
-									</div>
-								)}
-
-								{currentPlayer.draftedCards.length === 0 && (
-									<div className="no-cards">No cards drafted yet</div>
-								)}
-							</div>
-						);
-					})()}
-				</div>
-
-				{/* Word Spelling Section */}
-				<div className="word-spelling-section">
-					<h3>Word Spelling Bonus</h3>
-					{(() => {
-						const revealedAtomicNumbers = currentPlayer.draftedCards.slice(
-							0,
-							game.currentRound - 1,
-						);
-						const revealedCards = revealedAtomicNumbers
-							.map((num) => getElementByAtomicNumber(num))
-							.filter((el): el is ChemistryElement => el !== undefined);
-						const hasEnoughLetters =
-							revealedCards
-								.map((c) => c.atomicSymbol.length)
-								.reduce((a, b) => a + b, 0) >= 5;
-						const hasAvailablePlace = game.wordSpellingWinners.length < 3;
-						const hasWon = game.wordSpellingWinners.some(
-							(winner) => winner.playerId === currentPlayerId,
-						);
-						const canGetWordBonus = hasAvailablePlace && !hasWon;
-
-						if (!canGetWordBonus) return null;
-						return (
-							<form onSubmit={handleWordSubmit} className="word-form">
-								<div className="word-input-group">
-									<input
-										id="wordInput"
-										type="text"
-										value={wordInput}
-										onChange={(e) => setWordInput(e.target.value.toUpperCase())}
-										placeholder={
-											hasEnoughLetters
-												? "Enter 5-letter word"
-												: "Get 5 letters to spell a word"
-										}
-										maxLength={5}
-										disabled={wordSubmitting || !hasEnoughLetters}
-									/>
-									<button
-										type="submit"
-										disabled={wordInput.length !== 5 || wordSubmitting}
-									>
-										{wordSubmitting ? "Checking..." : "Submit Word"}
-									</button>
-								</div>
-								{wordError && <div className="word-error">{wordError}</div>}
-							</form>
-						);
-					})()}
-
-					{game.wordSpellingWinners.some(
-						(winner) => winner.playerId === currentPlayerId,
-					) && (
-						<div className="word-success">
-							✓ You have successfully submitted a word and earned points!
-						</div>
-					)}
-
-					{game.wordSpellingWinners.length >= 3 &&
-						!game.wordSpellingWinners.some(
-							(winner) => winner.playerId === currentPlayerId,
-						) && (
-							<div className="word-info">
-								All word spelling spots have been taken.
-							</div>
-						)}
-
-					{game.wordSpellingWinners.length > 0 && (
-						<div className="word-winners">
-							{(() => {
-								// Group winners by round and assign points correctly
-								const winnersByRound = game.wordSpellingWinners.reduce(
-									(acc, winner) => {
-										if (!acc[winner.round]) acc[winner.round] = [];
-										acc[winner.round].push(winner);
-										return acc;
-									},
-									{} as Record<number, typeof game.wordSpellingWinners>,
-								);
-
-								const sortedRounds = Object.keys(winnersByRound)
-									.map(Number)
-									.sort((a, b) => a - b);
-								const pointValues = [8, 5, 2];
-								let currentPointIndex = 0;
-
-								return sortedRounds.flatMap((round) => {
-									const roundWinners = winnersByRound[round];
-									const points = pointValues[currentPointIndex] || 0;
-									currentPointIndex += roundWinners.length; // Skip next places if multiple winners
-
-									return roundWinners.map((winner) => {
-										const player = game.players.find(
-											(p) => p.id === winner.playerId,
-										);
-										return (
-											<div key={winner.playerId} className="word-winner">
-												{player?.name}: {points} points (Round {round})
-											</div>
-										);
-									});
-								});
-							})()}
-						</div>
-					)}
-				</div>
-
-				{/* Opponents' Drafted Cards */}
-				<div className="opponents-drafted-cards-section">
-					<h3>Opponents' Drafted Cards:</h3>
-					{game.players
-						.filter((player) => player.id !== currentPlayerId)
-						.map((player) => {
-							const revealedAtomicNumbers = player.draftedCards.slice(
-								0,
-								game.currentRound - 1,
-							);
-							const unrevealedAtomicNumbers = player.draftedCards.slice(
-								game.currentRound - 1,
-							);
-							const revealedCards = revealedAtomicNumbers
-								.map((num) => getElementByAtomicNumber(num))
-								.filter((el): el is ChemistryElement => el !== undefined);
-
-							return (
-								<div key={player.id} className="player-drafted-cards">
-									<h4 className="player-name">{player.name}</h4>
-
-									{(revealedCards.length > 0 ||
-										unrevealedAtomicNumbers.length > 0) && (
-										<div className="card-group">
-											<div className="drafted-cards">
-												{/* Show revealed cards first */}
-												{revealedCards
-													.sort((a, b) => a.atomicNumber - b.atomicNumber)
-													.map((element, index) => (
-														<Card
-															key={`${player.id}-revealed-${element.atomicNumber}-${index}`}
-															element={element}
-														/>
-													))}
-
-												{/* Show face-down cards for unrevealed cards */}
-												{unrevealedAtomicNumbers.length > 0 &&
+											{/* Show unrevealed cards - actual cards for current player, face-down for others */}
+											{unrevealedCards.length > 0 &&
+												(isCurrentPlayer ? (
+													<div className="unrevealed-cards">
+														{unrevealedCards
+															.sort((a, b) => a.atomicNumber - b.atomicNumber)
+															.map((element, index) => (
+																<Card
+																	key={`${player.id}-unrevealed-${element.atomicNumber}-${index}`}
+																	element={element}
+																/>
+															))}
+													</div>
+												) : (
 													Array.from({
-														length: unrevealedAtomicNumbers.length,
+														length: unrevealedCards.length,
 													}).map((_, index) => (
 														<FaceDownCard
 															key={`${player.id}-facedown-${index}`}
 														/>
-													))}
-											</div>
+													))
+												))}
 										</div>
-									)}
+									</div>
+								)}
 
-									{player.draftedCards.length === 0 && (
-										<div className="no-cards">No cards drafted yet</div>
-									)}
-								</div>
-							);
-						})}
+								{player.draftedCards.length === 0 && (
+									<div className="no-cards">No cards drafted yet</div>
+								)}
+							</div>
+						);
+					})}
 				</div>
 			</div>
 		</div>
