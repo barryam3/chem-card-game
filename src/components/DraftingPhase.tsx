@@ -116,7 +116,7 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 	const sortedRounds = Object.keys(winnersByRound)
 		.map(Number)
 		.sort((a, b) => a - b);
-	const pointValues = [8, 5, 2];
+	const pointValues = game.players.length > 2 ? [8, 5, 2] : [8, 5];
 	let currentPointIndex = 0;
 
 	// Create array of all winners with their points
@@ -153,9 +153,20 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 				place > allWinners.length || points === winnerPointsThisRound,
 		};
 	});
-	const canWinWordRace = placeholders.some(
-		(placeholder) => placeholder.isAvailable,
+	const revealedAtomicNumbers = currentPlayer.draftedCards.slice(
+		0,
+		game.currentRound - 1,
 	);
+	const revealedCards = revealedAtomicNumbers
+		.map((num) => getElementByAtomicNumber(num))
+		.filter((el): el is ChemistryElement => el !== undefined);
+	const symbolLengths = revealedCards.map((c) => c.atomicSymbol.length);
+	const hasEnoughLetters = symbolLengths.reduce((a, b) => a + b, 0) >= 5;
+	const hasWon = game.wordSpellingWinners.some(
+		(winner) => winner.playerId === currentPlayerId,
+	);
+	const canWinWordRace =
+		!hasWon && placeholders.some((placeholder) => placeholder.isAvailable);
 
 	return (
 		<div className="drafting-phase">
@@ -203,64 +214,35 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 						{canWinWordRace && (
 							<div className="word-form-section">
 								<p className="drafting-info">
-									Be among the first players to spell a word with your atomic
-									symbols that has at least 5 letters.
+									Use your atomic symbols to spell a word with 5 or more letters
+									before your opponents!
 								</p>
-								{(() => {
-									const revealedAtomicNumbers =
-										currentPlayer.draftedCards.slice(0, game.currentRound - 1);
-									const revealedCards = revealedAtomicNumbers
-										.map((num) => getElementByAtomicNumber(num))
-										.filter((el): el is ChemistryElement => el !== undefined);
-									const symbolLengths = revealedCards.map(
-										(c) => c.atomicSymbol.length,
-									);
-									const hasEnoughLetters =
-										symbolLengths.reduce((a, b) => a + b, 0) >= 5;
-									const hasWon = game.wordSpellingWinners.some(
-										(winner) => winner.playerId === currentPlayerId,
-									);
-
-									if (hasWon) {
-										return (
-											<div className="word-success">
-												✓ You have successfully submitted a word and earned
-												points!
-											</div>
-										);
-									}
-
-									return (
-										<form onSubmit={handleWordSubmit} className="word-form">
-											<div className="word-input-group">
-												<input
-													id="wordInput"
-													type="text"
-													value={wordInput}
-													onChange={(e) =>
-														setWordInput(e.target.value.toUpperCase())
-													}
-													placeholder={
-														hasEnoughLetters
-															? "Enter a word"
-															: "Get 5 letters to spell a word"
-													}
-													disabled={wordSubmitting || !hasEnoughLetters}
-													autoComplete="off"
-												/>
-												<button
-													type="submit"
-													disabled={wordInput.length < 5 || wordSubmitting}
-												>
-													{wordSubmitting ? "Checking..." : "Submit Word"}
-												</button>
-											</div>
-											{wordError && (
-												<div className="word-error">{wordError}</div>
-											)}
-										</form>
-									);
-								})()}
+								<form onSubmit={handleWordSubmit} className="word-form">
+									<div className="word-input-group">
+										<input
+											id="wordInput"
+											type="text"
+											value={wordInput}
+											onChange={(e) =>
+												setWordInput(e.target.value.toUpperCase())
+											}
+											placeholder={
+												hasEnoughLetters
+													? "Enter a word"
+													: "Get 5 letters to spell a word"
+											}
+											disabled={wordSubmitting || !hasEnoughLetters}
+											autoComplete="off"
+										/>
+										<button
+											type="submit"
+											disabled={wordInput.length < 5 || wordSubmitting}
+										>
+											{wordSubmitting ? "Checking..." : "Submit Word"}
+										</button>
+									</div>
+									{wordError && <div className="word-error">{wordError}</div>}
+								</form>
 							</div>
 						)}
 
