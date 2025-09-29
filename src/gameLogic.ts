@@ -192,8 +192,35 @@ export function calculateIonizationScore(atomicNumbers: number[]): number {
   return score;
 }
 
-// Calculate family score (capped at maximum of 6 elements)
-export function calculateFamilyScore(atomicNumbers: number[]): number {
+// Calculate family score (capped at maximum of 5 elements)
+export function calculateSameFamilyScore(atomicNumbers: number[]): number {
+  const elements = getElementsFromAtomicNumbers(atomicNumbers);
+  const familyCounts: Record<string, number> = {};
+
+  for (const card of elements) {
+    familyCounts[card.family] = (familyCounts[card.family] || 0) + 1;
+  }
+
+  const largestFamily = Math.max(...Object.values(familyCounts));
+
+  // Cap at maximum of 5 elements
+  const cappedElements = Math.min(largestFamily, 5);
+
+  // Family scoring table (capped at 5)
+  const familyScores: Record<number, number> = {
+    1: 1,
+    2: 3,
+    3: 6,
+    4: 10,
+    5: 15,
+  };
+
+  return familyScores[cappedElements] || 0;
+}
+
+export function calculateDifferentFamiliesScore(
+  atomicNumbers: number[]
+): number {
   const elements = getElementsFromAtomicNumbers(atomicNumbers);
   const familyCounts: Record<string, number> = {};
 
@@ -202,24 +229,8 @@ export function calculateFamilyScore(atomicNumbers: number[]): number {
   }
 
   const uniqueFamilies = Object.keys(familyCounts).length;
-  const largestFamily = Math.max(...Object.values(familyCounts));
 
-  const elementsToScore = Math.max(uniqueFamilies, largestFamily);
-
-  // Cap at maximum of 6 elements
-  const cappedElements = Math.min(elementsToScore, 6);
-
-  // Family scoring table (capped at 6)
-  const familyScores: Record<number, number> = {
-    1: 0,
-    2: 1,
-    3: 3,
-    4: 6,
-    5: 10,
-    6: 15,
-  };
-
-  return familyScores[cappedElements] || 0;
+  return uniqueFamilies;
 }
 
 // Calculate word spelling points for a specific player
@@ -276,7 +287,8 @@ export function calculateTotalScore(
     ? calculateRadioactivityScore(playerAtomicNumbers)
     : 0;
   const ionization = calculateIonizationScore(playerAtomicNumbers);
-  const family = calculateFamilyScore(playerAtomicNumbers);
+  const sameFamily = calculateSameFamilyScore(playerAtomicNumbers);
+  const differentFamilies = calculateDifferentFamiliesScore(playerAtomicNumbers);
 
   const total =
     atomicNumber +
@@ -284,7 +296,8 @@ export function calculateTotalScore(
     atomicSymbol +
     radioactivity +
     ionization +
-    family;
+    sameFamily +
+    differentFamilies;
 
   return {
     atomicNumber,
@@ -292,7 +305,8 @@ export function calculateTotalScore(
     atomicSymbol,
     radioactivity,
     ionization,
-    family,
+    sameFamily,
+    differentFamilies,
     total,
   };
 }

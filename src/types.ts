@@ -50,6 +50,7 @@ export interface GameScore {
   atomicSymbol: number;
   radioactivity: number;
   ionization: number;
-  family: number;
+  sameFamily: number;
+  differentFamilies: number;
   total: number;
 }
