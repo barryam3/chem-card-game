@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import proxy from "http2-proxy";
+import finalhandler from "finalhandler";
 
 // Use HTTPS if certificate is found. Otherwise, use HTTP and log a warning.
 const https = (() => {
@@ -27,13 +28,21 @@ const https = (() => {
 const firestoreProxy: Plugin | undefined = https && {
   name: "firestore-proxy",
   configureServer: ({ middlewares }) => {
-    middlewares.use("/google.firestore.v1.Firestore", (req, res) => {
-      proxy.web(req, res, {
-        hostname: "localhost",
-        port: 8080,
-        path: req.originalUrl,
+    for (const route of ["/google.firestore.v1.Firestore", "/v1"]) {
+      middlewares.use(route, (req, res) => {
+        proxy.web(
+          req,
+          res,
+          {
+            hostname: "localhost",
+            port: 8080,
+            path: req.originalUrl,
+            proxyTimeout: 120000,  // 2 minutes
+          },
+          (err, req, res) => finalhandler(req, res)(err)
+        );
       });
-    });
+    }
   },
 };
 
