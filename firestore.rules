@@ -11,12 +11,6 @@ service cloud.firestore {
       return name is string && name.size() >= 1 && name.size() <= 50;
     }
     
-    function isRecentTimestamp(ts) {
-      return ts is number && 
-             ts > (request.time.toMillis() - 300000) && // Not older than 5 minutes (more lenient)
-             ts < (request.time.toMillis() + 60000); // Allow 1 minute in future
-    }
-    
     function isValidPlayer(player) {
       return player.keys().hasAll(['id', 'name', 'isHost']) &&
              player.id is string &&
@@ -29,25 +23,23 @@ service cloud.firestore {
     }
     
     function isValidLobbyPhaseData(data) {
-      return data.keys().hasAll(['id', 'phase', 'players', 'hostId', 'createdAt']) &&
+      return data.keys().hasAll(['id', 'phase', 'players', 'hostId', 'expireAt']) &&
              data.id is string &&
              data.phase == 'lobby' &&
              data.players is list &&
              data.players.size() >= 1 && data.players.size() <= 10 && // Max 10 players
              data.hostId is string &&
-             data.createdAt is number &&
-             (!('ttl' in data) || data.ttl is timestamp);
+             data.expireAt is timestamp;
     }
     
     function isValidActiveGameData(data) {
-      return data.keys().hasAll(['id', 'phase', 'players', 'currentRound', 'totalRounds', 'createdAt', 'hostId']) &&
+      return data.keys().hasAll(['id', 'phase', 'players', 'currentRound', 'totalRounds', 'expireAt', 'hostId']) &&
              data.phase in ['drafting', 'scoring', 'finished'] &&
              data.players is list &&
              data.players.size() >= 2 && data.players.size() <= 10 &&
              data.currentRound is number && data.currentRound >= 1 && data.currentRound <= 50 &&
              data.totalRounds is number && data.totalRounds >= 1 && data.totalRounds <= 50 &&
-             data.createdAt is number &&
-             (!('ttl' in data) || data.ttl is timestamp) &&
+             data.expireAt is timestamp &&
              (!('deck' in data) || data.deck is list) &&
              (!('wordSpellingWinners' in data) || data.wordSpellingWinners is list);
     }
@@ -65,15 +57,14 @@ service cloud.firestore {
       // Allow creating new games (lobby phase)
       allow create: if isValidGameData(request.resource.data) &&
                        request.resource.data.phase == 'lobby' &&
-                       isValidGameId(request.resource.data.id) &&
-                       isRecentTimestamp(request.resource.data.createdAt);
+                       isValidGameId(request.resource.data.id);
       
       // Allow updating games
       allow update: if isValidGameData(request.resource.data) &&
                        // Preserve the game ID
                        request.resource.data.id == resource.data.id &&
-                       // Don't allow changing creation timestamp
-                       request.resource.data.createdAt == resource.data.createdAt &&
+                       // Don't allow changing expiry timestamp
+                       request.resource.data.expireAt == resource.data.expireAt &&
                        // Don't allow changing host ID
                        request.resource.data.hostId == resource.data.hostId;
       

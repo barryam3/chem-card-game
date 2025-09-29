@@ -9,7 +9,7 @@ import { getElementByAtomicNumber } from "../gameLogic";
 import "./DraftingPhase.scss";
 
 interface DraftingPhaseProps {
-	game: GameState;
+	game: Omit<GameState, "expireAt">;
 	gameDocRef: DocumentReference | null;
 	currentPlayerId: string;
 }

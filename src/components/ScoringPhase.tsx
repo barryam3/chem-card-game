@@ -10,7 +10,7 @@ import {
 import "./ScoringPhase.scss";
 
 interface ScoringPhaseProps {
-	game: GameState;
+	game: Omit<GameState, "expireAt">;
 	currentPlayerId: string;
 }
 

@@ -17,7 +17,6 @@ export interface GameData {
     score?: number;
   }>;
   hostId: string;
-  createdAt: number;
   // Game-specific fields (only present when phase !== 'lobby')
   currentRound?: number;
   totalRounds?: number;
@@ -111,7 +110,6 @@ export function useGame(gameId: string | null): UseGameResult {
                  phase: "lobby",
                  players: lobbyData.players,
                  hostId: lobbyData.hostId,
-                 createdAt: lobbyData.createdAt,
                },
                docRef: gameDoc.ref,
              },
@@ -127,7 +125,6 @@ export function useGame(gameId: string | null): UseGameResult {
                  phase: fullGameData.phase,
                  players: fullGameData.players,
                  hostId: fullGameData.hostId,
-                 createdAt: fullGameData.createdAt,
                  currentRound: fullGameData.currentRound,
                  totalRounds: fullGameData.totalRounds,
                  deck: fullGameData.deck?.map((card) => card.atomicNumber) || [],

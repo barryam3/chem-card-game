@@ -26,7 +26,7 @@ export async function createLobby(): Promise<{
   const hostId = Math.random().toString(36).substring(2, 15);
 
   // Create TTL timestamp - 2 hours from now (for future use if billing is enabled)
-  const ttlTimestamp = Timestamp.fromDate(
+  const expireAt = Timestamp.fromDate(
     new Date(Date.now() + 2 * 60 * 60 * 1000)
   );
 
@@ -42,8 +42,7 @@ export async function createLobby(): Promise<{
       },
     ],
     hostId,
-    createdAt: Date.now(),
-    ttl: ttlTimestamp, // TTL field for future use
+    expireAt,
   };
 
   await addDoc(collection(db, GAMES_COLLECTION), lobbyData);
@@ -97,7 +96,7 @@ export async function joinLobby(
 // Update player name in lobby
 export async function updatePlayerName(
   gameDocRef: DocumentReference,
-  gameData: LobbyState,
+  gameData: Pick<LobbyState, "players">,
   playerId: string,
   newName: string
 ): Promise<boolean> {
@@ -128,7 +127,7 @@ export async function updatePlayerName(
 // Start the game (convert lobby to game)
 export async function startGame(
   gameDocRef: DocumentReference,
-  gameData: LobbyState
+  gameData: Pick<LobbyState, "players">,
 ): Promise<boolean> {
   if (gameData.players.length < 2) {
     return false;
@@ -137,11 +136,6 @@ export async function startGame(
   // Deal cards to players
   const hands = dealCards(gameData.players.length);
   const totalRounds = hands[0].length;
-
-  // Create TTL timestamp - 2 hours from now
-  const ttlTimestamp = Timestamp.fromDate(
-    new Date(Date.now() + 2 * 60 * 60 * 1000)
-  );
 
   // Update the existing document to convert from lobby to active game
   const updatedGameState = {
@@ -155,7 +149,6 @@ export async function startGame(
     currentRound: 1,
     totalRounds,
     wordSpellingWinners: [],
-    ttl: ttlTimestamp, // Firestore TTL field - auto-delete after 2 hours
   };
 
   // Update the existing document instead of creating a new one and deleting the old one
@@ -167,7 +160,7 @@ export async function startGame(
 // Submit draft selection
 export async function submitDraftSelection(
   gameDocRef: DocumentReference,
-  gameData: GameState,
+  gameData: Omit<GameState, "expireAt">,
   playerId: string,
   cardIndex: number
 ): Promise<boolean> {
@@ -248,7 +241,7 @@ let words: Set<string> | undefined;
 // Check for word spelling and update winners
 export async function checkWordSpelling(
   gameDocRef: DocumentReference,
-  gameData: GameState,
+  gameData: Omit<GameState, "expireAt">,
   playerId: string,
   word: string
 ): Promise<void> {

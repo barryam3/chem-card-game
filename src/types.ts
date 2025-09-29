@@ -25,17 +25,15 @@ export interface GameState {
   currentRound: number;
   totalRounds: number;
   wordSpellingWinners: WordSpellingWinner[]; // Players who have spelled 5-letter words with round info
-  createdAt: number;
+  expireAt: Timestamp;
   hostId: string;
-  ttl?: Timestamp; // TTL field for automatic deletion after 2 hours
 }
 
 export interface LobbyState {
   id: string;
   players: Omit<Player, 'draftedCards' | 'hand' | 'score'>[];
   hostId: string;
-  createdAt: number;
-  ttl?: Timestamp; // TTL field for automatic deletion after 2 hours
+  expireAt: Timestamp;
 }
 
 export interface DraftSelection {
