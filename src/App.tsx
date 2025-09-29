@@ -7,7 +7,6 @@ import { RulesModal } from './components/RulesModal';
 import { useGame } from './hooks/useGame';
 import { getGameIdFromUrl, getPlayerIdFromUrl, clearUrlParams } from './utils/urlUtils';
 import { saveGameState, clearGameState } from './utils/storageUtils';
-import { getElementByAtomicNumber } from './data';
 import './App.scss';
 
 
@@ -132,7 +131,6 @@ function App() {
           })),
           currentRound: game.currentRound || 1,
           totalRounds: game.totalRounds || 1,
-          deck: (game.deck || []).map(atomicNumber => getElementByAtomicNumber(atomicNumber)), // Convert numbers to full ChemistryElement objects
           wordSpellingWinners: game.wordSpellingWinners || [],
         };
         
@@ -156,7 +154,6 @@ function App() {
           })),
           currentRound: game.currentRound || 1,
           totalRounds: game.totalRounds || 1,
-          deck: (game.deck || []).map(atomicNumber => getElementByAtomicNumber(atomicNumber)), // Convert numbers to full ChemistryElement objects
           wordSpellingWinners: game.wordSpellingWinners || [],
         };
         

@@ -331,9 +331,9 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 						let playerLabel = player.name;
 						if (isCurrentPlayer) {
 							playerLabel += " (You)";
-						} else if (isReceivingFromYou) {
+						} else if (game.players.length > 2 && isReceivingFromYou) {
 							playerLabel += " (Receiving from you)";
-						} else if (isPassingToYou) {
+						} else if (game.players.length > 2 && isPassingToYou) {
 							playerLabel += " (Passing to you)";
 						}
 

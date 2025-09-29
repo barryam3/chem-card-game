@@ -7,11 +7,10 @@ import {
   where,
   Timestamp,
   runTransaction,
-  DocumentReference,
+  type DocumentReference,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { GameState, LobbyState, Player } from "./types";
-import { gameData as chemistryElements } from "./data";
 import { dealCards, generateGameId, canSpellWord } from "./gameLogic";
 
 const GAMES_COLLECTION = "games";
@@ -127,7 +126,7 @@ export async function updatePlayerName(
 // Start the game (convert lobby to game)
 export async function startGame(
   gameDocRef: DocumentReference,
-  gameData: Pick<LobbyState, "players">,
+  gameData: Pick<LobbyState, "players">
 ): Promise<boolean> {
   if (gameData.players.length < 2) {
     return false;
@@ -145,7 +144,6 @@ export async function startGame(
       draftedCards: [],
       hand: hands[index],
     })),
-    deck: [...chemistryElements], // chemistry elements array
     currentRound: 1,
     totalRounds,
     wordSpellingWinners: [],
@@ -274,10 +272,10 @@ export async function checkWordSpelling(
   if (!words) {
     const res = await fetch("/assets/words.txt");
     const text = await res.text();
-    words = new Set(text.split("\n"));
+    words = new Set(text.split("\n").map((line) => line.toLowerCase()));
   }
 
-  if (!words.has(word)) {
+  if (!words.has(word.toLowerCase())) {
     throw new Error("This word is not in our dictionary.");
   }
 

@@ -40,7 +40,6 @@ service cloud.firestore {
              data.currentRound is number && data.currentRound >= 1 && data.currentRound <= 50 &&
              data.totalRounds is number && data.totalRounds >= 1 && data.totalRounds <= 50 &&
              data.expireAt is timestamp &&
-             (!('deck' in data) || data.deck is list) &&
              (!('wordSpellingWinners' in data) || data.wordSpellingWinners is list);
     }
     

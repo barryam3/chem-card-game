@@ -20,7 +20,6 @@ export interface GameData {
   // Game-specific fields (only present when phase !== 'lobby')
   currentRound?: number;
   totalRounds?: number;
-  deck?: number[];
   wordSpellingWinners?: Array<{ playerId: string; round: number }>;
 }
 
@@ -127,7 +126,6 @@ export function useGame(gameId: string | null): UseGameResult {
                  hostId: fullGameData.hostId,
                  currentRound: fullGameData.currentRound,
                  totalRounds: fullGameData.totalRounds,
-                 deck: fullGameData.deck?.map((card) => card.atomicNumber) || [],
                  wordSpellingWinners: fullGameData.wordSpellingWinners,
                },
                docRef: gameDoc.ref,

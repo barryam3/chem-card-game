@@ -1,7 +1,6 @@
-import type { ChemistryElement } from './data';
-import type { Timestamp } from 'firebase/firestore';
+import type { Timestamp } from "firebase/firestore";
 
-export type GamePhase = 'lobby' | 'drafting' | 'scoring' | 'finished';
+export type GamePhase = "lobby" | "drafting" | "scoring" | "finished";
 
 export interface Player {
   id: string;
@@ -21,7 +20,6 @@ export interface GameState {
   id: string;
   phase: GamePhase;
   players: Player[];
-  deck: ChemistryElement[];
   currentRound: number;
   totalRounds: number;
   wordSpellingWinners: WordSpellingWinner[]; // Players who have spelled 5-letter words with round info
@@ -31,7 +29,7 @@ export interface GameState {
 
 export interface LobbyState {
   id: string;
-  players: Omit<Player, 'draftedCards' | 'hand' | 'score'>[];
+  players: Omit<Player, "draftedCards" | "hand" | "score">[];
   hostId: string;
   expireAt: Timestamp;
 }
