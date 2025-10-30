@@ -660,7 +660,7 @@ export const gameData: ReadonlyArray<Readonly<ChemistryElement>> = [
     atomicSymbol: "Po",
     atomicMass: 210,
     radioactive: true,
-    family: "Metalloid",
+    family: "Metal",
   },
   {
     name: "Astatine",
@@ -668,7 +668,7 @@ export const gameData: ReadonlyArray<Readonly<ChemistryElement>> = [
     atomicSymbol: "At",
     atomicMass: 210,
     radioactive: true,
-    family: "Noble Gas",
+    family: "Halogen",
     negativeIon: 1,
   },
   {
@@ -677,7 +677,7 @@ export const gameData: ReadonlyArray<Readonly<ChemistryElement>> = [
     atomicSymbol: "Rn",
     atomicMass: 222,
     radioactive: true,
-    family: "Alkali Metal",
+    family: "Noble Gas",
   },
   {
     name: "Francium",
@@ -685,7 +685,7 @@ export const gameData: ReadonlyArray<Readonly<ChemistryElement>> = [
     atomicSymbol: "Fr",
     atomicMass: 223,
     radioactive: true,
-    family: "Alkaline Earth Metal",
+    family: "Alkali Metal",
     positiveIon: 1,
   },
   {
@@ -694,7 +694,7 @@ export const gameData: ReadonlyArray<Readonly<ChemistryElement>> = [
     atomicSymbol: "Ra",
     atomicMass: 226,
     radioactive: true,
-    family: "Actinide",
+    family: "Alkaline Earth Metal",
     positiveIon: 2,
   },
   {
