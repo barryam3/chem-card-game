@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { GameState, GameScore } from "../types";
+import type { GameState, GameScore, Player } from "../types";
 import { Card } from "./Card";
 import {
 	calculateTotalScore,
@@ -29,8 +29,11 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({
 		game.players.forEach((player, index) => {
 			const leftNeighbor =
 				game.players[index === 0 ? game.players.length - 1 : index - 1];
-			const rightNeighbor =
-				game.players[index === game.players.length - 1 ? 0 : index + 1];
+			let rightNeighbor: Player | undefined;
+			if (game.players.length > 2) {
+				rightNeighbor =
+					game.players[index === game.players.length - 1 ? 0 : index + 1];
+			}
 
 			// Calculate word spelling bonus for this player using the new logic
 			const wordSpellingBonus = calculateWordSpellingPoints(
@@ -41,7 +44,7 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({
 			calculatedScores[player.id] = calculateTotalScore(
 				player.draftedCards,
 				leftNeighbor.draftedCards,
-				rightNeighbor.draftedCards,
+				rightNeighbor?.draftedCards,
 				wordSpellingBonus,
 				showRadioactivity,
 			);
@@ -146,7 +149,7 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({
 											</div>
 											<div className="score-item">
 												<span>Atomic Mass:</span>{" "}
-												<span>{playerScore.atomicMass}</span>
+												<span>{playerScore.atomicWeight}</span>
 											</div>
 											<div className="score-item">
 												<span>Atomic Symbol:</span>{" "}
@@ -195,23 +198,25 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({
 							})}
 					</div>
 					<h3>Other Players' Drafted Cards</h3>
-					{game.players.filter((player) => player.id !== currentPlayerId).map((player) => (
-						<div key={player.id}>
-							<h4 className="player-name">{player.name}</h4>
-							<div className="cards-grid">
-								{player.draftedCards.map((atomicNumber, index) => {
-									const element = getElementByAtomicNumber(atomicNumber);
-									if (!element) return null;
-									return (
-										<Card
-											key={`${player.id}-${atomicNumber}-${index}`}
-											element={element}
-										/>
-									);
-								})}
+					{game.players
+						.filter((player) => player.id !== currentPlayerId)
+						.map((player) => (
+							<div key={player.id}>
+								<h4 className="player-name">{player.name}</h4>
+								<div className="cards-grid">
+									{player.draftedCards.map((atomicNumber, index) => {
+										const element = getElementByAtomicNumber(atomicNumber);
+										if (!element) return null;
+										return (
+											<Card
+												key={`${player.id}-${atomicNumber}-${index}`}
+												element={element}
+											/>
+										);
+									})}
+								</div>
 							</div>
-						</div>
-					))}
+						))}
 				</div>
 			</div>
 		</div>

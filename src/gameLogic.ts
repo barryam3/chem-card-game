@@ -1,4 +1,4 @@
-import { gameData, getMassGroup } from "./data";
+import { gameData } from "./data";
 import type { ChemistryElement } from "./data";
 import type { GameScore } from "./types";
 
@@ -35,14 +35,14 @@ export function getDeckConfig(players: number): {
 } {
   const configs: { [players: number]: { deckSize: number; handSize: number } } =
     {
-      2: { deckSize: 36, handSize: 15 },
-      3: { deckSize: 54, handSize: 15 },
-      4: { deckSize: 54, handSize: 13 },
-      5: { deckSize: 54, handSize: 10 },
-      6: { deckSize: 86, handSize: 14 },
-      7: { deckSize: 103, handSize: 14 },
-      8: { deckSize: 103, handSize: 12 },
-      9: { deckSize: 103, handSize: 11 },
+      2: { deckSize: 36, handSize: 10 },
+      3: { deckSize: 54, handSize: 10 },
+      4: { deckSize: 54, handSize: 10 },
+      5: { deckSize: 86, handSize: 10 },
+      6: { deckSize: 86, handSize: 10 },
+      7: { deckSize: 103, handSize: 10 },
+      8: { deckSize: 103, handSize: 10 },
+      9: { deckSize: 103, handSize: 10 },
       10: { deckSize: 103, handSize: 10 },
     };
 
@@ -97,35 +97,37 @@ export function calculateAtomicNumberScore(atomicNumbers: number[]): number {
 }
 
 // Calculate atomic mass score (compare with neighbors)
-export function calculateAtomicMassScore(
+export function calculateatomicWeightScore(
   playerAtomicNumbers: number[],
   leftNeighborAtomicNumbers: number[],
-  rightNeighborAtomicNumbers: number[]
+  rightNeighborAtomicNumbers?: number[]
 ): number {
   const playerElements = getElementsFromAtomicNumbers(playerAtomicNumbers);
   const leftElements = getElementsFromAtomicNumbers(leftNeighborAtomicNumbers);
-  const rightElements = getElementsFromAtomicNumbers(
-    rightNeighborAtomicNumbers
-  );
+  const rightElements = rightNeighborAtomicNumbers
+    ? getElementsFromAtomicNumbers(rightNeighborAtomicNumbers)
+    : null;
 
   const playerMass = playerElements.reduce(
-    (sum, card) => sum + getMassGroup(card),
+    (sum, card) => sum + card.atomicWeight,
     0
   );
   const leftMass = leftElements.reduce(
-    (sum, card) => sum + getMassGroup(card),
+    (sum, card) => sum + card.atomicWeight,
     0
   );
-  const rightMass = rightElements.reduce(
-    (sum, card) => sum + getMassGroup(card),
+  const rightMass = rightElements?.reduce(
+    (sum, card) => sum + card.atomicWeight,
     0
   );
 
   let score = 0;
-  if (playerMass > leftMass) score += 2;
-  if (playerMass < leftMass) score -= 2;
-  if (playerMass > rightMass) score += 2;
-  if (playerMass < rightMass) score -= 2;
+  if (playerMass > leftMass) score += 4;
+  if (playerMass < leftMass) score -= 4;
+  if (rightMass) {
+    if (playerMass > rightMass) score += 4;
+    if (playerMass < rightMass) score -= 4;
+  }
 
   return score;
 }
@@ -186,13 +188,12 @@ export function calculateIonizationScore(atomicNumbers: number[]): number {
       positiveIons[chargeNum],
       negativeIons[chargeNum] || 0
     );
-    score += pairs * 5;
+    score += pairs * 3;
   }
 
   return score;
 }
 
-// Calculate family score (capped at maximum of 5 elements)
 export function calculateSameFamilyScore(atomicNumbers: number[]): number {
   const elements = getElementsFromAtomicNumbers(atomicNumbers);
   const familyCounts: Record<string, number> = {};
@@ -203,16 +204,14 @@ export function calculateSameFamilyScore(atomicNumbers: number[]): number {
 
   const largestFamily = Math.max(...Object.values(familyCounts));
 
-  // Cap at maximum of 5 elements
-  const cappedElements = Math.min(largestFamily, 5);
+  const cappedElements = Math.min(largestFamily, 6);
 
-  // Family scoring table (capped at 5)
   const familyScores: Record<number, number> = {
-    1: 1,
-    2: 3,
-    3: 6,
-    4: 10,
-    5: 15,
+    2: 1,
+    3: 3,
+    4: 6,
+    5: 10,
+    6: 15,
   };
 
   return familyScores[cappedElements] || 0;
@@ -272,12 +271,12 @@ export function calculateWordSpellingPoints(
 export function calculateTotalScore(
   playerAtomicNumbers: number[],
   leftNeighborAtomicNumbers: number[],
-  rightNeighborAtomicNumbers: number[],
+  rightNeighborAtomicNumbers?: number[],
   wordSpellingBonus = 0,
   includeRadioactivity = true
 ): GameScore {
   const atomicNumber = calculateAtomicNumberScore(playerAtomicNumbers);
-  const atomicMass = calculateAtomicMassScore(
+  const atomicWeight = calculateatomicWeightScore(
     playerAtomicNumbers,
     leftNeighborAtomicNumbers,
     rightNeighborAtomicNumbers
@@ -288,11 +287,12 @@ export function calculateTotalScore(
     : 0;
   const ionization = calculateIonizationScore(playerAtomicNumbers);
   const sameFamily = calculateSameFamilyScore(playerAtomicNumbers);
-  const differentFamilies = calculateDifferentFamiliesScore(playerAtomicNumbers);
+  const differentFamilies =
+    calculateDifferentFamiliesScore(playerAtomicNumbers);
 
   const total =
     atomicNumber +
-    atomicMass +
+    atomicWeight +
     atomicSymbol +
     radioactivity +
     ionization +
@@ -301,7 +301,7 @@ export function calculateTotalScore(
 
   return {
     atomicNumber,
-    atomicMass,
+    atomicWeight,
     atomicSymbol,
     radioactivity,
     ionization,

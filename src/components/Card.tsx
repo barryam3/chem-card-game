@@ -1,5 +1,4 @@
 import type { ChemistryElement } from "../data";
-import { getMassGroup } from "../data";
 import "./Card.scss";
 
 interface CardProps {
@@ -76,9 +75,7 @@ export const Card: React.FC<CardProps> = ({
 			</div>
 
 			{/* Mass symbols at the bottom center */}
-			<div className="mass">
-				{renderMassSymbols(getMassGroup(element))}
-			</div>
+			<div className="mass">{renderMassSymbols(element.atomicWeight)}</div>
 
 			{/* Atomic number at bottom left */}
 			<div className="number">{element.atomicNumber}</div>

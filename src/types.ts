@@ -42,7 +42,7 @@ export interface DraftSelection {
 
 export interface GameScore {
   atomicNumber: number;
-  atomicMass: number;
+  atomicWeight: number;
   atomicSymbol: number;
   radioactivity: number;
   ionization: number;

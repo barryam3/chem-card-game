@@ -1,32 +1,52 @@
-Chemistry Chard Game
+# Chem Card Game Rules
 
-This game is played with 2-10 players.
+# Setup
 
-This game is played with a deck of 103 cards, one for every element of the periodic table from Hydrogen (atomic number 1) to Lawrencium (atomic number 103).
+Depending on the number of players, remove cards from the deck with atomic numbers above the number listed in the table below. Then, shuffle and deal 10 cards to each player.
 
-Depending on the number of players, remove cards from the deck before starting according to the table below. Include only cards with atomic number of Deck Size or below. Then deal out an equal number of cards to each player (this initial hand size is included in the table for convenience). Set the leftover cards aside: they will not be used in this game.
+| Players | 2   | 3-4 | 5-6 | 7-10 |
+| :------ | :-- | :-- | :-- | :--- |
+| Deck    | 36  | 54  | 86  | 103  |
 
-| Players   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   | 10  |
-| --------- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Deck Size | 36  | 54  | 54  | 54  | 86  | 103 | 103 | 103 | 103 |
-| Hand Size | 15  | 15  | 13  | 10  | 14  | 14  | 12  | 11  | 10  |
+# Gameplay
 
-Each player privately selects a card from their hand to draft. Once all players have made their selection, they place the drafted card face up in front of them. Then, they pass the remaining cards to the left. The process repeats until all of the cards have been drafted.
+Each player selects a card to draft and places it face down in front of them. Once all players have selected a card, they reveal all of the drafted cards simultaneously. Then, they pass their hand of cards to the player on their left. This continues until all cards have been drafted.
 
-The goal of the game is to score the most points. Scoring is as follows:
+## Atomic Symbol Word Race
 
-- **Atomic number**: Players earn points equal to the square of the longest sequence of consecutive atomic numbers they have drafted, with a minimum length of 2 and up to a maximum length of 4. For example, if a player has atomic numbers 1, 5, 6, 7, 10, 11, and 13, they would score 9 points for their longest sequence of 3: 5, 6, and 7.
-  - | Elements | 2   | 3   | 4   |
-    | -------- | --- | --- | --- |
-    | Points   | 4   | 9   | 16  |
-- **Atomic mass**: Add up the atomic mass of all of your drafted cards. Then, compare your total atomic mass to each of your neighbors', that is, the players sitting on your left and right. For each where your atomic mass is greater, you score 2 points. For each where your atomic mass is lower, you lose 2 points. (In a 2-player game, the player with the larger atomic mass would gain 4 points and the player with the lower atomic mass would lose 4 points.) No points are awarded or taken away for ties.
-- **Atomic symbol**: The first player to spell a 5-letter word with their atomic symbols scores 8 points. The second player scores 5, and the third player scores 2. If two players both spell a 5-letter word on the same turn, they each get the points for that placing, and the next place is skipped for scoring. For example, if Barry and Suzy tie to be the first to spell a 5-letter word on turn 4, then they each score 8 points. If you then spell a 5-letter word on turn 5, you score 2 points for 3rd place.
-- **Ionization**: Score 5 points for each matching pair of positive and negative ions with the same number of charges. Each element can only be used in one pair.
-- **Same Family**: Count the number of elements you have in your largest family and score points as follows:
-  - | Elements | 1   | 2   | 3   | 4   | 5   |
-    | -------- | --- | --- | --- | --- | --- |
-    | Points   | 1   | 3   | 6   | 10  | 15  |
-- **Different Families**: Score 1 point per unique element family you have.
-- **Radioactivity (7+ players only)**: If you have at least 2 radioactive elements, you score 7 points. However, if you have exactly 1, you lose 3 points.
+At any point, you can say a word spelled using the atomic symbols on 3 or more of your drafted cards. The first few players to do so will score points.
 
-The player with the most total points wins. If there is a tie, the player who drafted the element with the highest atomic number wins.
+_For example_, if you have drafted Germanium (Ge), Nickel (Ni), Uranium (U), and Sulfur (S), you can spell GeNiUS. You could not spell SiNG, since two-letter atomic symbols cannot be broken up.
+
+# Scoring
+
+**Different Families:** Score 1 point for each element family represented among your drafted cards. (There are 10.)
+
+**Largest Family:** Determine the largest number of elements you drafted in the same family, then score points as follows:
+
+| Size   | 2   | 3   | 4   | 5   | 6+  |
+| :----- | :-- | :-- | :-- | :-- | :-- |
+| Points | 1   | 3   | 6   | 10  | 15  |
+
+**Ions:** Score 3 points for each pair of elements with the same value of opposite ionization. _For example,_ Na (+1) and Cl (-1) scores. _Each element can only participate in one pair._
+
+**Atomic Number:** Sort your elements by atomic number, then count how many you have sequentially in order. _For example,_ if you have 1, 2, 3, and 5, your longest sequence would be size 3\. Score points as follows:
+
+| Size   | 2   | 3   | 4+  |
+| :----- | :-- | :-- | :-- |
+| Points | 4   | 9   | 16  |
+
+**Atomic Weight:** Add up the atomic weight of all of your elements, then compare your total with your neighbors: the players on your left and right. If you have a higher total atomic weight than your neighbor, you score 4 points. If you have a lower total, you _lose_ 4 points. _In a two-player game, you only have one neighbor._
+
+**Atomic Symbol:** If you spell a word, score points according to the number of players who spelled a word in a prior round:
+
+| After  | 0 ("1st") | 1 ("2nd") | 2 ("3rd") |
+| :----- | :-------- | :-------- | :-------- |
+| Points | 8         | 5         | 2         |
+
+_For example,_ if Abe and Bea both spell a word in round 4 (after drafting 3 cards), they each score 8 points ("tie for 1st"). If Cal then spells a word in round 5, they score 2 points, since 2 players spelled a word in a prior round ("3rd place").
+
+**Radioactivity** (103-card deck only): If you have 2 or more radioactive elements, score 7 points. If you have exactly 1, _lose_ 3 points.
+
+Winning  
+The player with the most total points wins. If there is a tie, the tied player who drafted the element with the highest atomic number wins.
