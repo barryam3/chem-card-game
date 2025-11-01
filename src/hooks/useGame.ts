@@ -1,5 +1,11 @@
 import { useReducer, useEffect } from "react";
-import { collection, query, where, onSnapshot, DocumentReference } from "firebase/firestore";
+import {
+	collection,
+	query,
+	where,
+	onSnapshot,
+	type DocumentReference,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import type { GameState as FirebaseGameState, LobbyState } from "../types";
 
@@ -21,7 +27,7 @@ export interface GameData {
   // Game-specific fields (only present when phase !== 'lobby')
   currentRound?: number;
   totalRounds?: number;
-  wordSpellingWinners?: Array<{ playerId: string; round: number }>;
+  wordSpellingWinners?: Array<{ playerId: string; round: number; word: string }>;
 }
 
 export interface UseGameResult {

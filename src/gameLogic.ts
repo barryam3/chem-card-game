@@ -132,8 +132,10 @@ export function calculateatomicWeightScore(
   return score;
 }
 
-// Check if a 5-letter word can be spelled with atomic symbols
-export function canSpellWord(atomicNumbers: number[], word: string): boolean {
+export function canSpellWord(
+  atomicNumbers: number[],
+  word: string
+): string[] | null {
   const elements = getElementsFromAtomicNumbers(atomicNumbers);
   const symbols = elements.map((card) => card.atomicSymbol);
   return canSpellWordWithSymbols(symbols, word);
@@ -142,16 +144,22 @@ export function canSpellWord(atomicNumbers: number[], word: string): boolean {
 export function canSpellWordWithSymbols(
   atomicSymbols: string[],
   word: string
-): boolean {
-  if (word.length === 0) return true;
-  return atomicSymbols.some(
-    (atomicSymbol) =>
-      word.toLowerCase().startsWith(atomicSymbol.toLowerCase()) &&
-      canSpellWordWithSymbols(
-        atomicSymbols.filter((s) => s !== atomicSymbol),
-        word.slice(atomicSymbol.length)
-      )
-  );
+): string[] | null {
+  if (word.length === 0) return [];
+  
+  for (const atomicSymbol of atomicSymbols) {
+    if (word.toLowerCase().startsWith(atomicSymbol.toLowerCase())) {
+      const remainingSymbols = atomicSymbols.filter((s) => s !== atomicSymbol);
+      const remainingWord = word.slice(atomicSymbol.length);
+      const result = canSpellWordWithSymbols(remainingSymbols, remainingWord);
+      
+      if (result !== null) {
+        return [atomicSymbol, ...result];
+      }
+    }
+  }
+  
+  return null;
 }
 
 // Calculate radioactivity score

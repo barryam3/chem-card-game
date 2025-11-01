@@ -78,7 +78,7 @@ This is an online multiplayer chemistry card game built with React and Firebase.
 The game follows the rules defined in `RULES.md`:
 - **Atomic Number**: Score points for consecutive atomic number sequences
 - **Atomic Mass**: Compare total mass with neighbors
-- **Atomic Symbol**: Spell 5-letter words for bonus points
+- **Atomic Symbol**: Spell words for bonus points
 - **Radioactivity**: Bonus/penalty for radioactive elements
 - **Ionization**: Score for matching positive/negative ion pairs
 - **Family**: Score based on element families

@@ -3,30 +3,34 @@ import { canSpellWordWithSymbols, calculateWordSpellingPoints } from "./gameLogi
 
 describe("canSpellWordWithSymbols", () => {
   describe("Basic functionality", () => {
-    it("should return true for a word that can be spelled with available symbols", () => {
+    it("should return symbols used for a word that can be spelled with available symbols", () => {
       const symbols = ["H", "O", "U", "S", "E"];
 
-      expect(canSpellWordWithSymbols(symbols, "HOUSE")).toBe(true);
+      const result = canSpellWordWithSymbols(symbols, "HOUSE");
+      expect(result).not.toBeNull();
+      expect(result?.length).toBeGreaterThan(0);
+      // Should return the symbols used (order may vary, but should contain all needed symbols)
+      expect(result).toEqual(expect.arrayContaining(["H", "O", "U", "S", "E"]));
     });
 
-    it("should return false for a word that cannot be spelled with available symbols", () => {
+    it("should return null for a word that cannot be spelled with available symbols", () => {
       const symbols = ["H", "O"];
 
-      expect(canSpellWordWithSymbols(symbols, "HELLO")).toBe(false);
+      expect(canSpellWordWithSymbols(symbols, "HELLO")).toBeNull();
     });
 
-    it("should handle empty word", () => {
+    it("should return empty array for empty word", () => {
       const symbols = ["H"];
 
-      expect(canSpellWordWithSymbols(symbols, "")).toBe(true);
+      expect(canSpellWordWithSymbols(symbols, "")).toEqual([]);
     });
 
-    it("should handle empty symbols array", () => {
-      expect(canSpellWordWithSymbols([], "HELLO")).toBe(false);
+    it("should return null for empty symbols array", () => {
+      expect(canSpellWordWithSymbols([], "HELLO")).toBeNull();
     });
 
-    it("should handle both empty symbols and empty word", () => {
-      expect(canSpellWordWithSymbols([], "")).toBe(true);
+    it("should return empty array for both empty symbols and empty word", () => {
+      expect(canSpellWordWithSymbols([], "")).toEqual([]);
     });
   });
 
@@ -34,15 +38,15 @@ describe("canSpellWordWithSymbols", () => {
     it("should be case insensitive for word input", () => {
       const symbols = ["H", "O", "U", "S", "E"];
 
-      expect(canSpellWordWithSymbols(symbols, "house")).toBe(true);
-      expect(canSpellWordWithSymbols(symbols, "HOUSE")).toBe(true);
-      expect(canSpellWordWithSymbols(symbols, "HoUsE")).toBe(true);
+      expect(canSpellWordWithSymbols(symbols, "house")).not.toBeNull();
+      expect(canSpellWordWithSymbols(symbols, "HOUSE")).not.toBeNull();
+      expect(canSpellWordWithSymbols(symbols, "HoUsE")).not.toBeNull();
     });
 
     it("should be case insensitive for atomic symbols", () => {
       const symbols = ["h", "O", "u", "S", "e"]; // mixed case symbols
 
-      expect(canSpellWordWithSymbols(symbols, "HOUSE")).toBe(true);
+      expect(canSpellWordWithSymbols(symbols, "HOUSE")).not.toBeNull();
     });
   });
 
@@ -50,25 +54,25 @@ describe("canSpellWordWithSymbols", () => {
     it("should handle duplicate letters correctly", () => {
       const symbols = ["H", "E", "L", "L", "O"];
 
-      expect(canSpellWordWithSymbols(symbols, "HELLO")).toBe(false); // Can't spell because using "L" removes all L's
+      expect(canSpellWordWithSymbols(symbols, "HELLO")).toBeNull(); // Can't spell because using "L" removes all L's
     });
 
-    it("should return false when not enough duplicate letters available", () => {
+    it("should return null when not enough duplicate letters available", () => {
       const symbols = ["H", "E", "L", "O"]; // Only one L
 
-      expect(canSpellWordWithSymbols(symbols, "HELLO")).toBe(false); // Needs two L's
+      expect(canSpellWordWithSymbols(symbols, "HELLO")).toBeNull(); // Needs two L's
     });
 
     it("should handle words with repeated letters when enough symbols available", () => {
       const symbols = ["B", "O", "O", "K"];
 
-      expect(canSpellWordWithSymbols(symbols, "BOOK")).toBe(false); // Can't spell because using "O" removes all O's
+      expect(canSpellWordWithSymbols(symbols, "BOOK")).toBeNull(); // Can't spell because using "O" removes all O's
     });
 
-    it("should return false when not enough repeated letters", () => {
+    it("should return null when not enough repeated letters", () => {
       const symbols = ["B", "O", "K"]; // Only one O
 
-      expect(canSpellWordWithSymbols(symbols, "BOOK")).toBe(false); // Needs two O's
+      expect(canSpellWordWithSymbols(symbols, "BOOK")).toBeNull(); // Needs two O's
     });
   });
 
@@ -76,32 +80,32 @@ describe("canSpellWordWithSymbols", () => {
     it("should handle single-character atomic symbols", () => {
       const symbols = ["H", "O", "N", "E", "Y"];
 
-      expect(canSpellWordWithSymbols(symbols, "HONEY")).toBe(true);
+      expect(canSpellWordWithSymbols(symbols, "HONEY")).not.toBeNull();
     });
 
     it("should treat multi-character atomic symbols as whole symbols, not individual letters", () => {
       const symbols = ["He", "Li", "Be", "Ne", "Na"]; // Multi-character symbols
 
       // Can spell words using multi-character symbols if they match
-      expect(canSpellWordWithSymbols(symbols, "HELEN")).toBe(false); // Would need 'h', 'e', 'l', 'e', 'n' individually
-      expect(canSpellWordWithSymbols(symbols, "HELI")).toBe(true); // "He" + "Li" = "HELI"
+      expect(canSpellWordWithSymbols(symbols, "HELEN")).toBeNull(); // Would need 'h', 'e', 'l', 'e', 'n' individually
+      expect(canSpellWordWithSymbols(symbols, "HELI")).not.toBeNull(); // "He" + "Li" = "HELI"
 
       // But can spell if we have the right multi-character combinations
       const symbols2 = ["H", "E", "Li", "Ne"];
-      expect(canSpellWordWithSymbols(symbols2, "HELINE")).toBe(true); // "He" + "Li" + "Ne" = "HELINE"
+      expect(canSpellWordWithSymbols(symbols2, "HELINE")).not.toBeNull(); // "He" + "Li" + "Ne" = "HELINE"
     });
 
     it("should handle mixed single and multi-character symbols", () => {
       const symbols = ["C", "At", "S"];
 
-      expect(canSpellWordWithSymbols(symbols, "CATS")).toBe(true); // c + at + s = cats
-      expect(canSpellWordWithSymbols(symbols, "SCAT")).toBe(true); // s + c + at = scat
-      expect(canSpellWordWithSymbols(symbols, "CAST")).toBe(false); // Would need c + a + s + t, but we only have 'at' not 'a' and 't'
+      expect(canSpellWordWithSymbols(symbols, "CATS")).not.toBeNull(); // c + at + s = cats
+      expect(canSpellWordWithSymbols(symbols, "SCAT")).not.toBeNull(); // s + c + at = scat
+      expect(canSpellWordWithSymbols(symbols, "CAST")).toBeNull(); // Would need c + a + s + t, but we only have 'at' not 'a' and 't'
 
       // But these should work because they use the exact symbols we have
       const symbols2 = ["C", "A", "T", "S"];
-      expect(canSpellWordWithSymbols(symbols2, "CATS")).toBe(true); // c + a + t + s = cats
-      expect(canSpellWordWithSymbols(symbols2, "SCAT")).toBe(true); // s + c + a + t = scat
+      expect(canSpellWordWithSymbols(symbols2, "CATS")).not.toBeNull(); // c + a + t + s = cats
+      expect(canSpellWordWithSymbols(symbols2, "SCAT")).not.toBeNull(); // s + c + a + t = scat
     });
   });
 
@@ -111,26 +115,26 @@ describe("canSpellWordWithSymbols", () => {
 
       expect(
         canSpellWordWithSymbols(symbols, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-      ).toBe(true);
+      ).not.toBeNull();
     });
 
     it("should handle single letter words", () => {
       const symbols = ["A"];
 
-      expect(canSpellWordWithSymbols(symbols, "A")).toBe(true);
-      expect(canSpellWordWithSymbols(symbols, "B")).toBe(false);
+      expect(canSpellWordWithSymbols(symbols, "A")).not.toBeNull();
+      expect(canSpellWordWithSymbols(symbols, "B")).toBeNull();
     });
 
     it("should handle special characters in atomic symbols", () => {
       const symbols = ["H", "O", "U", "S", "E"];
 
-      expect(canSpellWordWithSymbols(symbols, "HOUSE")).toBe(true);
+      expect(canSpellWordWithSymbols(symbols, "HOUSE")).not.toBeNull();
     });
 
     it("should handle numbers and special characters in word (should treat as letters)", () => {
       const symbols = ["1", "2", "3"];
 
-      expect(canSpellWordWithSymbols(symbols, "123")).toBe(true);
+      expect(canSpellWordWithSymbols(symbols, "123")).not.toBeNull();
     });
   });
 
@@ -139,24 +143,24 @@ describe("canSpellWordWithSymbols", () => {
       const symbols = ["C", "H", "O", "I", "Ce"]; // Ce is cerium, not separate C and E
 
       // Available symbols: c, h, o, i, ce
-      expect(canSpellWordWithSymbols(symbols, "CHOICE")).toBe(true); // "C" + "H" + "O" + "I" + "Ce" = "CHOICE"
-      expect(canSpellWordWithSymbols(symbols, "CHOI")).toBe(true); // c + h + o + i = choi
-      expect(canSpellWordWithSymbols(symbols, "ICE")).toBe(true); // "I" + "Ce" = "ICE"
+      expect(canSpellWordWithSymbols(symbols, "CHOICE")).not.toBeNull(); // "C" + "H" + "O" + "I" + "Ce" = "CHOICE"
+      expect(canSpellWordWithSymbols(symbols, "CHOI")).not.toBeNull(); // c + h + o + i = choi
+      expect(canSpellWordWithSymbols(symbols, "ICE")).not.toBeNull(); // "I" + "Ce" = "ICE"
     });
 
     it("should work with multi-character element symbols", () => {
       const symbols = ["Au", "Ag", "Cu", "Fe", "Pb"];
 
       // Available symbols: au, ag, cu, fe, pb
-      expect(canSpellWordWithSymbols(symbols, "CAGE")).toBe(false); // Would need c,a,g,e individually
-      expect(canSpellWordWithSymbols(symbols, "CUP")).toBe(false); // Would need c,u,p individually, but we have 'cu' not separate 'c' and 'u'
-      expect(canSpellWordWithSymbols(symbols, "CUFE")).toBe(true); // "Cu" + "Fe" = "CUFE"
-      expect(canSpellWordWithSymbols(symbols, "AGAU")).toBe(true); // "Ag" + "Au" = "AGAU"
+      expect(canSpellWordWithSymbols(symbols, "CAGE")).toBeNull(); // Would need c,a,g,e individually
+      expect(canSpellWordWithSymbols(symbols, "CUP")).toBeNull(); // Would need c,u,p individually, but we have 'cu' not separate 'c' and 'u'
+      expect(canSpellWordWithSymbols(symbols, "CUFE")).not.toBeNull(); // "Cu" + "Fe" = "CUFE"
+      expect(canSpellWordWithSymbols(symbols, "AGAU")).not.toBeNull(); // "Ag" + "Au" = "AGAU"
 
       // Multi-character symbols can only be used if we need those exact letters
       const symbols2 = ["A", "U", "G"];
-      expect(canSpellWordWithSymbols(symbols2, "AUG")).toBe(true); // a + u + g = aug
-      expect(canSpellWordWithSymbols(symbols2, "GAU")).toBe(true); // g + a + u = gau
+      expect(canSpellWordWithSymbols(symbols2, "AUG")).not.toBeNull(); // a + u + g = aug
+      expect(canSpellWordWithSymbols(symbols2, "GAU")).not.toBeNull(); // g + a + u = gau
     });
 
     it("should handle realistic game scenario with mixed symbols", () => {
@@ -164,17 +168,17 @@ describe("canSpellWordWithSymbols", () => {
       const symbols = ["B", "E", "A", "C", "H"];
 
       // Available symbols: b, e, a, c, h
-      expect(canSpellWordWithSymbols(symbols, "BEACH")).toBe(true); // b + e + a + c + h = beach
-      expect(canSpellWordWithSymbols(symbols, "EACH")).toBe(true); // e + a + c + h = each
-      expect(canSpellWordWithSymbols(symbols, "CHAB")).toBe(true); // c + h + a + b = chab
+      expect(canSpellWordWithSymbols(symbols, "BEACH")).not.toBeNull(); // b + e + a + c + h = beach
+      expect(canSpellWordWithSymbols(symbols, "EACH")).not.toBeNull(); // e + a + c + h = each
+      expect(canSpellWordWithSymbols(symbols, "CHAB")).not.toBeNull(); // c + h + a + b = chab
     });
 
     it("should handle complex multi-character combinations", () => {
       const symbols = ["Be", "At", "Es"];
 
-      expect(canSpellWordWithSymbols(symbols, "BEATS")).toBe(false); // Would need b,e,a,t,s but we have 'Be', 'At', 'Es' as whole symbols
-      expect(canSpellWordWithSymbols(symbols, "BEAST")).toBe(false); // Would need b,e,a,s,t but we have 'Be', 'At', 'Es' as whole symbols
-      expect(canSpellWordWithSymbols(symbols, "BEATES")).toBe(true); // "Be" + "At" + "Es" = "BEATES"
+      expect(canSpellWordWithSymbols(symbols, "BEATS")).toBeNull(); // Would need b,e,a,t,s but we have 'Be', 'At', 'Es' as whole symbols
+      expect(canSpellWordWithSymbols(symbols, "BEAST")).toBeNull(); // Would need b,e,a,s,t but we have 'Be', 'At', 'Es' as whole symbols
+      expect(canSpellWordWithSymbols(symbols, "BEATES")).not.toBeNull(); // "Be" + "At" + "Es" = "BEATES"
     });
   });
 });

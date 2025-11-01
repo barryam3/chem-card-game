@@ -4,8 +4,19 @@ import type { GameState, Player } from "../types";
 import type { ChemistryElement } from "../data";
 import { Card } from "./Card";
 import { FaceDownCard } from "./FaceDownCard";
-import { submitDraftSelection, checkWordSpelling } from "../firebaseService";
-import { getElementByAtomicNumber } from "../gameLogic";
+import {
+	submitDraftSelection,
+	submitMultipleDraftSelections,
+	checkWordSpelling,
+} from "../firebaseService";
+import {
+	getElementByAtomicNumber,
+	getElementsFromAtomicNumbers,
+} from "../gameLogic";
+import {
+	loadCommonWordsTrie,
+	type PrecomputedWordChecker,
+} from "../utils/wordTrie";
 import "./DraftingPhase.scss";
 
 interface DraftingPhaseProps {
@@ -33,8 +44,29 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 	const [wordSubmitting, setWordSubmitting] = useState(false);
 	const [wordError, setWordError] = useState("");
 	const previousRoundRef = useRef(game.currentRound);
-	const isHost = game.players.find((p) => p.id === currentPlayerId)?.isHost ?? false;
+	const isHost =
+		game.players.find((p) => p.id === currentPlayerId)?.isHost ?? false;
 	const processedComputerPlayersRef = useRef<Set<string>>(new Set());
+	const commonWordsTrieRef = useRef<PrecomputedWordChecker | null>(null);
+	const trieLoadingRef = useRef(false);
+	const processedWordSpellingRef = useRef<Set<string>>(new Set());
+
+	// Load common words trie on mount (host only)
+	useEffect(() => {
+		if (isHost && !commonWordsTrieRef.current && !trieLoadingRef.current) {
+			trieLoadingRef.current = true;
+			loadCommonWordsTrie()
+				.then((trie) => {
+					commonWordsTrieRef.current = trie;
+				})
+				.catch((error) => {
+					console.error("Failed to load common words trie:", error);
+				})
+				.finally(() => {
+					trieLoadingRef.current = false;
+				});
+		}
+	}, [isHost]);
 
 	// Reset submitting state when game state changes (new round or phase change)
 	useEffect(() => {
@@ -44,57 +76,162 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 			previousRoundRef.current = game.currentRound;
 			// Reset processed computer players when round changes
 			processedComputerPlayersRef.current.clear();
+			processedWordSpellingRef.current.clear();
 		}
 	}, [game.currentRound]);
 
-	// Auto-pick cards for computer players (only on host's client)
+	// Group winners by round and assign points correctly
+	const winnersByRound = game.wordSpellingWinners.reduce(
+		(acc, winner) => {
+			if (!acc[winner.round]) acc[winner.round] = [];
+			acc[winner.round].push(winner);
+			return acc;
+		},
+		{} as Record<number, typeof game.wordSpellingWinners>,
+	);
+
+	const sortedRounds = Object.keys(winnersByRound)
+		.map(Number)
+		.sort((a, b) => a - b);
+	const pointValues = game.players.length > 2 ? [8, 5, 2] : [8, 5];
+	let currentPointIndex = 0;
+
+	// Create array of all winners with their points
+	const allWinners = sortedRounds.flatMap((round) => {
+		const roundWinners = winnersByRound[round];
+		const points = pointValues[currentPointIndex] || 0;
+		currentPointIndex += roundWinners.length; // Skip next places if multiple winners
+
+		return roundWinners.map((winner) => {
+			const player = game.players.find((p) => p.id === winner.playerId);
+			return {
+				...winner,
+				playerName: player?.name || "Unknown",
+				points,
+				round,
+				word: winner.word || "", // Include the word
+			};
+		});
+	});
+
+	const winnerPointsThisRound = allWinners.find(
+		(winner) => winner.round === game.currentRound,
+	)?.points;
+
+	// Create placeholders only for available places
+	const placeholders = pointValues.map((points, index) => {
+		const place = index + 1;
+		const label =
+			place === 1 ? "1st Place" : place === 2 ? "2nd Place" : "3rd Place";
+		return {
+			place,
+			points,
+			label,
+			isAvailable:
+				place > allWinners.length || points === winnerPointsThisRound,
+		};
+	});
+
+	// Process all computer players when round advances (only on host's client)
 	useEffect(() => {
 		if (!isHost || !gameDocRef || game.phase !== "drafting") return;
 
-		// Find computer players that need to pick a card for this round
+		// Find all computer players that need to pick a card for this round
 		const computerPlayersToProcess = game.players.filter((player) => {
 			const hasSubmitted = player.draftedCards.length >= game.currentRound;
-			const needsPick = !hasSubmitted && player.isComputer && player.hand.length > 0;
+			const needsPick =
+				!hasSubmitted && player.isComputer && player.hand.length > 0;
 			const alreadyProcessed = processedComputerPlayersRef.current.has(
-				`${player.id}-${game.currentRound}`
+				`${player.id}-${game.currentRound}`,
 			);
 			return needsPick && !alreadyProcessed;
 		});
 
 		if (computerPlayersToProcess.length === 0) return;
 
-		// Process each computer player with a small delay to avoid race conditions
-		const processComputerPlayer = async (player: typeof game.players[0]) => {
-			if (player.hand.length === 0) return;
+		// Process all computer players
+		const processAllComputerPlayers = async () => {
+			// First, check for word spelling opportunities (these need to be done individually)
+			for (const player of computerPlayersToProcess) {
+				if (player.hand.length === 0) continue;
 
-			// Pick a random card index
-			const randomIndex = Math.floor(Math.random() * player.hand.length);
-
-			// Mark as processed before submitting to avoid duplicate submissions
-			const processKey = `${player.id}-${game.currentRound}`;
-			processedComputerPlayersRef.current.add(processKey);
-
-			try {
-				await submitDraftSelection(
-					gameDocRef,
-					game,
-					player.id,
-					randomIndex
+				// Check if this player has already won (before checking if we've processed them)
+				const hasWonWordRace = game.wordSpellingWinners.some(
+					(w) => w.playerId === player.id,
 				);
-			} catch (error) {
-				// If submission fails, remove from processed set to retry
-				processedComputerPlayersRef.current.delete(processKey);
-				console.error("Failed to submit computer player selection:", error);
+				
+				// If they've already won, mark as processed and skip
+				if (hasWonWordRace) {
+					const wordSpellingKey = `${player.id}-${game.currentRound}`;
+					processedWordSpellingRef.current.add(wordSpellingKey);
+					continue;
+				}
+
+				const wordSpellingKey = `${player.id}-${game.currentRound}`;
+				if (!processedWordSpellingRef.current.has(wordSpellingKey)) {
+					const revealedCards = player.draftedCards.slice(
+						0,
+						game.currentRound - 1,
+					);
+					const revealedElements = getElementsFromAtomicNumbers(revealedCards);
+					const revealedSymbols = revealedElements.map((el) => el.atomicSymbol);
+
+					const canWinWordRace =
+						revealedSymbols.length >= 3 &&
+						commonWordsTrieRef.current &&
+						placeholders.some((placeholder) => placeholder.isAvailable);
+
+					if (canWinWordRace) {
+						const trie = commonWordsTrieRef.current;
+						if (trie) {
+							const word = trie.findFirstWord(revealedSymbols);
+							if (word) {
+								try {
+									await checkWordSpelling(gameDocRef, game, player.id, word);
+									processedWordSpellingRef.current.add(wordSpellingKey);
+								} catch (error) {
+									// If they've already won, mark as processed to avoid retrying
+									if (error instanceof Error && error.message === "You have already spelled a word.") {
+										processedWordSpellingRef.current.add(wordSpellingKey);
+									}
+									console.error("Computer player word spelling failed:", error);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// Then, batch submit all card selections at once
+			const selections = computerPlayersToProcess
+				.filter((player) => player.hand.length > 0)
+				.map((player) => {
+					const randomIndex = Math.floor(Math.random() * player.hand.length);
+					const processKey = `${player.id}-${game.currentRound}`;
+					processedComputerPlayersRef.current.add(processKey);
+					return {
+						playerId: player.id,
+						cardIndex: randomIndex,
+					};
+				});
+
+			if (selections.length > 0) {
+				try {
+					await submitMultipleDraftSelections(gameDocRef, game, selections);
+				} catch (error) {
+					// If submission fails, remove from processed set to retry
+					for (const selection of selections) {
+						const processKey = `${selection.playerId}-${game.currentRound}`;
+						processedComputerPlayersRef.current.delete(processKey);
+					}
+					console.error("Failed to submit computer player selections:", error);
+				}
 			}
 		};
 
-		// Process computer players sequentially with small delays
-		computerPlayersToProcess.forEach((player, index) => {
-			setTimeout(() => {
-				processComputerPlayer(player);
-			}, index * 100); // Small delay between each submission
-		});
-	}, [game, gameDocRef, isHost]);
+		// Start processing immediately
+		processAllComputerPlayers();
+	}, [game, gameDocRef, isHost, placeholders]);
 
 	const currentPlayerIndex = game.players.findIndex(
 		(p) => p.id === currentPlayerId,
@@ -132,7 +269,7 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 
 	const handleWordSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (wordInput.length >= 5 && !wordSubmitting && gameDocRef) {
+		if (wordInput.length >= 3 && !wordSubmitting && gameDocRef) {
 			setWordSubmitting(true);
 			setWordError("");
 
@@ -157,56 +294,6 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 		(player) => player.draftedCards.length >= game.currentRound,
 	);
 
-	// Group winners by round and assign points correctly
-	const winnersByRound = game.wordSpellingWinners.reduce(
-		(acc, winner) => {
-			if (!acc[winner.round]) acc[winner.round] = [];
-			acc[winner.round].push(winner);
-			return acc;
-		},
-		{} as Record<number, typeof game.wordSpellingWinners>,
-	);
-
-	const sortedRounds = Object.keys(winnersByRound)
-		.map(Number)
-		.sort((a, b) => a - b);
-	const pointValues = game.players.length > 2 ? [8, 5, 2] : [8, 5];
-	let currentPointIndex = 0;
-
-	// Create array of all winners with their points
-	const allWinners = sortedRounds.flatMap((round) => {
-		const roundWinners = winnersByRound[round];
-		const points = pointValues[currentPointIndex] || 0;
-		currentPointIndex += roundWinners.length; // Skip next places if multiple winners
-
-		return roundWinners.map((winner) => {
-			const player = game.players.find((p) => p.id === winner.playerId);
-			return {
-				...winner,
-				playerName: player?.name || "Unknown",
-				points,
-				round,
-			};
-		});
-	});
-
-	const winnerPointsThisRound = allWinners.find(
-		(winner) => winner.round === game.currentRound,
-	)?.points;
-
-	// Create placeholders only for available places
-	const placeholders = pointValues.map((points, index) => {
-		const place = index + 1;
-		const label =
-			place === 1 ? "1st Place" : place === 2 ? "2nd Place" : "3rd Place";
-		return {
-			place,
-			points,
-			label,
-			isAvailable:
-				place > allWinners.length || points === winnerPointsThisRound,
-		};
-	});
 	const revealedAtomicNumbers = currentPlayer.draftedCards.slice(
 		0,
 		game.currentRound - 1,
@@ -214,13 +301,13 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 	const revealedCards = revealedAtomicNumbers
 		.map((num) => getElementByAtomicNumber(num))
 		.filter((el): el is ChemistryElement => el !== undefined);
-	const symbolLengths = revealedCards.map((c) => c.atomicSymbol.length);
-	const hasEnoughLetters = symbolLengths.reduce((a, b) => a + b, 0) >= 5;
+	const hasEnoughSymbols = revealedCards.length >= 3;
 	const hasWon = game.wordSpellingWinners.some(
 		(winner) => winner.playerId === currentPlayerId,
 	);
 	const canWinWordRace =
 		!hasWon &&
+		hasEnoughSymbols &&
 		!isCurrentPlayerComputer &&
 		placeholders.some((placeholder) => placeholder.isAvailable);
 
@@ -270,8 +357,8 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 						{canWinWordRace && (
 							<div className="word-form-section">
 								<p className="drafting-info">
-									Use your atomic symbols to spell a word with 5 or more letters
-									before your opponents!
+									Use 3 or more atomic symbols to spell a word before your
+									opponents!
 								</p>
 								<form onSubmit={handleWordSubmit} className="word-form">
 									<div className="word-input-group">
@@ -283,16 +370,16 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 												setWordInput(e.target.value.toUpperCase())
 											}
 											placeholder={
-												hasEnoughLetters
+												hasEnoughSymbols
 													? "Enter a word"
-													: "Get 5 letters to spell a word"
+													: "Get 3 cards to spell a word"
 											}
-											disabled={wordSubmitting || !hasEnoughLetters}
+											disabled={wordSubmitting || !hasEnoughSymbols}
 											autoComplete="off"
 										/>
 										<button
 											type="submit"
-											disabled={wordInput.length < 5 || wordSubmitting}
+											disabled={wordInput.length < 3 || wordSubmitting}
 										>
 											{wordSubmitting ? "Checking..." : "Submit Word"}
 										</button>
@@ -325,7 +412,14 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 																key={winner.playerId}
 																className="word-winner"
 															>
-																{winner.playerName} (Round {winner.round})
+																<div className="word-winner-name">
+																	{winner.playerName} (Round {winner.round})
+																</div>
+																{winner.word && (
+																	<div className="word-winner-word">
+																		"{winner.word}"
+																	</div>
+																)}
 															</div>
 														))
 													) : (

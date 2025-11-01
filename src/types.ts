@@ -15,6 +15,7 @@ export interface Player {
 export interface WordSpellingWinner {
   playerId: string;
   round: number;
+  word: string;
 }
 
 export interface GameState {
@@ -23,7 +24,7 @@ export interface GameState {
   players: Player[];
   currentRound: number;
   totalRounds: number;
-  wordSpellingWinners: WordSpellingWinner[]; // Players who have spelled 5-letter words with round info
+  wordSpellingWinners: WordSpellingWinner[]; // Players who have spelled words with round info
   expireAt: Timestamp;
   hostId: string;
 }

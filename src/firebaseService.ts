@@ -7,6 +7,7 @@ import {
   where,
   Timestamp,
   runTransaction,
+  getDoc,
   type DocumentReference,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -190,28 +191,57 @@ export async function submitDraftSelection(
   playerId: string,
   cardIndex: number
 ): Promise<boolean> {
-  const playerIndex = gameData.players.findIndex((p) => p.id === playerId);
-  if (playerIndex === -1) {
-    return false;
+  return submitMultipleDraftSelections(gameDocRef, gameData, [
+    { playerId, cardIndex },
+  ]);
+}
+
+// Submit multiple draft selections at once (batch operation)
+export async function submitMultipleDraftSelections(
+  gameDocRef: DocumentReference,
+  gameData: Omit<GameState, "expireAt">,
+  selections: Array<{ playerId: string; cardIndex: number }>
+): Promise<boolean> {
+  if (selections.length === 0) {
+    return true;
   }
 
-  const player = gameData.players[playerIndex];
-  if (cardIndex < 0 || cardIndex >= player.hand.length) {
-    return false;
+  // Validate all selections first
+  for (const selection of selections) {
+    const playerIndex = gameData.players.findIndex(
+      (p) => p.id === selection.playerId
+    );
+    if (playerIndex === -1) {
+      return false;
+    }
+
+    const player = gameData.players[playerIndex];
+    if (selection.cardIndex < 0 || selection.cardIndex >= player.hand.length) {
+      return false;
+    }
   }
 
-  // Move card from hand to drafted cards
-  const selectedCard = player.hand[cardIndex];
-  const newHand = player.hand.filter((_, index) => index !== cardIndex);
-  const newDraftedCards = [...player.draftedCards, selectedCard];
-
-  // Update player
+  // Apply all selections to players
   const updatedPlayers = [...gameData.players];
-  updatedPlayers[playerIndex] = {
-    ...player,
-    hand: newHand,
-    draftedCards: newDraftedCards,
-  };
+  for (const selection of selections) {
+    const playerIndex = updatedPlayers.findIndex(
+      (p) => p.id === selection.playerId
+    );
+    const player = updatedPlayers[playerIndex];
+
+    // Move card from hand to drafted cards
+    const selectedCard = player.hand[selection.cardIndex];
+    const newHand = player.hand.filter(
+      (_, index) => index !== selection.cardIndex
+    );
+    const newDraftedCards = [...player.draftedCards, selectedCard];
+
+    updatedPlayers[playerIndex] = {
+      ...player,
+      hand: newHand,
+      draftedCards: newDraftedCards,
+    };
+  }
 
   // Check if all players have made their selection for this round
   // Each player should have at least as many drafted cards as the current round number
@@ -258,7 +288,18 @@ export async function submitDraftSelection(
     }
   }
 
-  await updateDoc(gameDocRef, updatedGameData);
+  // Read latest game state to avoid overwriting concurrent updates (e.g., word spelling)
+  const gameDoc = await getDoc(gameDocRef);
+  if (!gameDoc.exists()) {
+    return false;
+  }
+  const latestGameData = gameDoc.data() as Omit<GameState, "expireAt">;
+  
+  // Preserve wordSpellingWinners from the latest game state to avoid overwriting concurrent word spelling
+  await updateDoc(gameDocRef, {
+    ...updatedGameData,
+    wordSpellingWinners: latestGameData.wordSpellingWinners,
+  });
   return true;
 }
 
@@ -272,8 +313,8 @@ export async function checkWordSpelling(
   word: string
 ): Promise<void> {
   // Validate word length.
-  if (!word || word.length < 5) {
-    throw new Error("Word must be at least 5 letters");
+  if (!word || word.length < 3) {
+    throw new Error("Word must be at least 3 letters");
   }
 
   const player = gameData.players.find((p) => p.id === playerId);
@@ -281,20 +322,37 @@ export async function checkWordSpelling(
     throw new Error("Error. Try refreshing the page.");
   }
 
-  // Check if player already won word spelling
+  // Read latest game state from Firestore to avoid race conditions
+  const gameDoc = await getDoc(gameDocRef);
+  if (!gameDoc.exists()) {
+    throw new Error("Game not found");
+  }
+  const latestGameData = gameDoc.data() as Omit<GameState, "expireAt">;
+
+  // Check if player already won word spelling (check latest data)
   if (
-    gameData.wordSpellingWinners.some((winner) => winner.playerId === playerId)
+    latestGameData.wordSpellingWinners.some((winner) => winner.playerId === playerId)
   ) {
     throw new Error("You have already spelled a word.");
   }
 
   // Only allow using cards that have been revealed (drafted in previous rounds)
   // Cards drafted in the current round are not yet revealed to everyone
-  const revealedCards = player.draftedCards.slice(0, gameData.currentRound - 1);
+  const revealedCards = player.draftedCards.slice(0, latestGameData.currentRound - 1);
+
+  if (revealedCards.length < 3) {
+    throw new Error("You need at least 3 cards to spell a word.");
+  }
 
   // Check if the player can spell this word with their revealed cards only
-  if (!canSpellWord(revealedCards, word)) {
+  const usedSymbols = canSpellWord(revealedCards, word);
+  if (!usedSymbols) {
     throw new Error("Cannot spell this word with your drafted cards.");
+  }
+
+  // Verify at least 3 symbols were used
+  if (usedSymbols.length < 3) {
+    throw new Error("Word must use at least 3 atomic symbols.");
   }
 
   if (!words) {
@@ -307,11 +365,29 @@ export async function checkWordSpelling(
     throw new Error("This word is not in our dictionary.");
   }
 
-  // Add player to winners list with current round
+  // Read latest game state again right before updating to minimize race condition window
+  // Note: We don't use a transaction here because it conflicts with concurrent draft selections
+  // Instead, we read right before write and rely on Firestore's version control
+  const finalGameDoc = await getDoc(gameDocRef);
+  if (!finalGameDoc.exists()) {
+    throw new Error("Game not found");
+  }
+  
+  const finalGameData = finalGameDoc.data() as Omit<GameState, "expireAt">;
+  
+  // Double-check player hasn't already won (might have won since last check)
+  if (
+    finalGameData.wordSpellingWinners.some((winner) => winner.playerId === playerId)
+  ) {
+    throw new Error("You have already spelled a word.");
+  }
+
+  // Add player to winners list with current round and word
   const updatedWinners = [
-    ...gameData.wordSpellingWinners,
-    { playerId, round: gameData.currentRound },
+    ...finalGameData.wordSpellingWinners,
+    { playerId, round: finalGameData.currentRound, word },
   ];
+  
   await updateDoc(gameDocRef, {
     wordSpellingWinners: updatedWinners,
   });

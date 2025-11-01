@@ -81,7 +81,6 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 									<thead>
 										<tr>
 											<th>Elements</th>
-											<th>1</th>
 											<th>2</th>
 											<th>3</th>
 											<th>4+</th>
@@ -92,7 +91,6 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 											<td>
 												<strong>Points</strong>
 											</td>
-											<td>1</td>
 											<td>4</td>
 											<td>9</td>
 											<td>16</td>
@@ -107,15 +105,15 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 							<p>
 								If the total atomic mass of your drafted cards is greater than
 								that of your neighbor (the players passing to and receiving from
-								you), you score 2 points. If it is lower, you lose 2 points. (In
-								a two-player game, this happens twice for your one opponent.)
+								you), you score 4 points. If it is lower, you lose 4 points. (In
+								a two-player game, you only have one opponent.)
 							</p>
 						</div>
 
 						<div className="scoring-rule">
 							<h4>Atomic Symbol</h4>
 							<p>
-								Be the 1st, 2nd, or 3rd to spell a 5-letter or longer word with
+								Be the 1st, 2nd, or 3rd to spell a 3-symbol or longer word with
 								your atomic symbols to score points. If two players both spell a
 								word on the same turn, they each get the points for that
 								placing, and the next place is skipped for scoring. For example,
@@ -150,7 +148,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 						<div className="scoring-rule">
 							<h4>Ionization</h4>
 							<p>
-								Score 5 points for each matching pair of positive and negative
+								Score 3 points for each matching pair of positive and negative
 								ions with the same number of charges. Each element can only be
 								used in one pair.
 							</p>
@@ -168,11 +166,11 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 									<thead>
 										<tr>
 											<th>Elements</th>
-											<th>1</th>
 											<th>2</th>
 											<th>3</th>
 											<th>4</th>
-											<th>5+</th>
+											<th>5</th>
+											<th>6+</th>
 										</tr>
 									</thead>
 									<tbody>

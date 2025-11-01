@@ -320,6 +320,17 @@
       &:last-child {
         margin-bottom: 0;
       }
+
+      .word-winner-name {
+        margin-bottom: $spacing-xs;
+      }
+
+      .word-winner-word {
+        font-weight: $font-weight-normal;
+        font-style: italic;
+        margin-top: $spacing-xs;
+        opacity: 0.9;
+      }
     }
 
     .place-empty {
