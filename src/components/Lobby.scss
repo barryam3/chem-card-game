@@ -72,8 +72,29 @@
     @include badge-primary;
   }
 
+  .computer-badge {
+    @include badge-secondary;
+    background: #6366f1;
+  }
+
   .lobby-actions {
     text-align: center;
+  }
+
+  .add-computer-btn {
+    @include button-primary;
+    font-size: $font-size-md;
+    margin-bottom: $spacing-sm;
+    background: #6366f1;
+
+    &:hover {
+      background: color.adjust(#6366f1, $lightness: -10%);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 
   .start-game-btn {

@@ -6,6 +6,7 @@ export interface Player {
   id: string;
   name: string;
   isHost: boolean;
+  isComputer?: boolean; // Flag to mark computer players
   draftedCards: number[]; // Store atomic numbers only
   hand: number[]; // Store atomic numbers only
   score?: number;
@@ -33,6 +34,8 @@ export interface LobbyState {
   hostId: string;
   expireAt: Timestamp;
 }
+
+export const MAX_PLAYERS = 10;
 
 export interface DraftSelection {
   playerId: string;

@@ -134,7 +134,9 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({
 									<div className="rank">#{index + 1}</div>
 									<div className="player-info">
 										<div className="player-name">
-											{player.name} {isCurrentPlayer && "(You)"}
+											{player.name}
+											{player.isComputer && " 🤖"}
+											{isCurrentPlayer && " (You)"}
 										</div>
 										<div className="total-score">
 											Total: {playerScore?.total || 0} points
@@ -202,7 +204,10 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({
 						.filter((player) => player.id !== currentPlayerId)
 						.map((player) => (
 							<div key={player.id}>
-								<h4 className="player-name">{player.name}</h4>
+								<h4 className="player-name">
+									{player.name}
+									{player.isComputer && " 🤖"}
+								</h4>
 								<div className="cards-grid">
 									{player.draftedCards.map((atomicNumber, index) => {
 										const element = getElementByAtomicNumber(atomicNumber);

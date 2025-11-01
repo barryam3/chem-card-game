@@ -33,6 +33,8 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 	const [wordSubmitting, setWordSubmitting] = useState(false);
 	const [wordError, setWordError] = useState("");
 	const previousRoundRef = useRef(game.currentRound);
+	const isHost = game.players.find((p) => p.id === currentPlayerId)?.isHost ?? false;
+	const processedComputerPlayersRef = useRef<Set<string>>(new Set());
 
 	// Reset submitting state when game state changes (new round or phase change)
 	useEffect(() => {
@@ -40,8 +42,59 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 			setIsSubmitting(false);
 			setSelectedCardIndex(null);
 			previousRoundRef.current = game.currentRound;
+			// Reset processed computer players when round changes
+			processedComputerPlayersRef.current.clear();
 		}
 	}, [game.currentRound]);
+
+	// Auto-pick cards for computer players (only on host's client)
+	useEffect(() => {
+		if (!isHost || !gameDocRef || game.phase !== "drafting") return;
+
+		// Find computer players that need to pick a card for this round
+		const computerPlayersToProcess = game.players.filter((player) => {
+			const hasSubmitted = player.draftedCards.length >= game.currentRound;
+			const needsPick = !hasSubmitted && player.isComputer && player.hand.length > 0;
+			const alreadyProcessed = processedComputerPlayersRef.current.has(
+				`${player.id}-${game.currentRound}`
+			);
+			return needsPick && !alreadyProcessed;
+		});
+
+		if (computerPlayersToProcess.length === 0) return;
+
+		// Process each computer player with a small delay to avoid race conditions
+		const processComputerPlayer = async (player: typeof game.players[0]) => {
+			if (player.hand.length === 0) return;
+
+			// Pick a random card index
+			const randomIndex = Math.floor(Math.random() * player.hand.length);
+
+			// Mark as processed before submitting to avoid duplicate submissions
+			const processKey = `${player.id}-${game.currentRound}`;
+			processedComputerPlayersRef.current.add(processKey);
+
+			try {
+				await submitDraftSelection(
+					gameDocRef,
+					game,
+					player.id,
+					randomIndex
+				);
+			} catch (error) {
+				// If submission fails, remove from processed set to retry
+				processedComputerPlayersRef.current.delete(processKey);
+				console.error("Failed to submit computer player selection:", error);
+			}
+		};
+
+		// Process computer players sequentially with small delays
+		computerPlayersToProcess.forEach((player, index) => {
+			setTimeout(() => {
+				processComputerPlayer(player);
+			}, index * 100); // Small delay between each submission
+		});
+	}, [game, gameDocRef, isHost]);
 
 	const currentPlayerIndex = game.players.findIndex(
 		(p) => p.id === currentPlayerId,
@@ -50,6 +103,7 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 		return <div>Player not found</div>;
 	}
 	const currentPlayer = game.players[currentPlayerIndex];
+	const isCurrentPlayerComputer = currentPlayer.isComputer ?? false;
 
 	// Check if current player has already submitted for this round
 	// They have submitted if they have at least as many drafted cards as the current round
@@ -166,7 +220,9 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 		(winner) => winner.playerId === currentPlayerId,
 	);
 	const canWinWordRace =
-		!hasWon && placeholders.some((placeholder) => placeholder.isAvailable);
+		!hasWon &&
+		!isCurrentPlayerComputer &&
+		placeholders.some((placeholder) => placeholder.isAvailable);
 
 	return (
 		<div className="drafting-phase">
@@ -312,6 +368,9 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 						const isPassingToYou = i === game.players.length - 1; // Last player in order
 
 						let playerLabel = player.name;
+						if (player.isComputer) {
+							playerLabel += " 🤖";
+						}
 						if (isCurrentPlayer) {
 							playerLabel += " (You)";
 						} else if (game.players.length > 2 && isReceivingFromYou) {

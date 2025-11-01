@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import type { DocumentReference } from "firebase/firestore";
 import type { GameData } from "../hooks/useGame";
-import { startGame, updatePlayerName } from "../firebaseService";
+import { startGame, updatePlayerName, addComputerPlayer } from "../firebaseService";
+import { MAX_PLAYERS } from "../types";
 import { getGameUrl } from "../utils/urlUtils";
 import { savePlayerName } from "../utils/storageUtils";
 import './Lobby.scss';
@@ -35,6 +36,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [tempPlayerName, setTempPlayerName] = useState(playerName);
 	const [copySuccess, setCopySuccess] = useState(false);
+	const [isAddingComputer, setIsAddingComputer] = useState(false);
 	
 	// Handle game start transition
 	useEffect(() => {
@@ -110,6 +112,17 @@ export const Lobby: React.FC<LobbyProps> = ({
 			setCopySuccess(true);
 			setTimeout(() => setCopySuccess(false), 2000);
 		}
+	};
+
+	const handleAddComputerPlayer = async () => {
+		if (!isHost || !lobby || lobby.players.length >= MAX_PLAYERS || !gameDocRef) return;
+
+		setIsAddingComputer(true);
+		const success = await addComputerPlayer(gameDocRef, lobby);
+		if (!success) {
+			alert("Failed to add computer player. Please try again.");
+		}
+		setIsAddingComputer(false);
 	};
 
 	if (loading) {
@@ -193,6 +206,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 						>
 							<span className="player-name">{player.name}</span>
 							{player.isHost && <span className="host-badge">Host</span>}
+							{player.isComputer && <span className="computer-badge">🤖 Computer</span>}
 							{player.id === playerId && <span className="you-badge">You</span>}
 						</div>
 					))}
@@ -201,6 +215,14 @@ export const Lobby: React.FC<LobbyProps> = ({
 
 			{isHost && (
 				<div className="lobby-actions">
+					<button
+						type="button"
+						onClick={handleAddComputerPlayer}
+						disabled={lobby.players.length >= MAX_PLAYERS || isAddingComputer || isStarting}
+						className="add-computer-btn"
+					>
+						{isAddingComputer ? "Adding..." : "🤖 Add Computer Player"}
+					</button>
 					<button
 						type="button"
 						onClick={handleStartGame}
@@ -212,7 +234,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 					<p className="start-hint">
 						{lobby.players.length < 2
 							? "Waiting for at least one more player..."
-							: "Ready to start!"}
+							: `Ready to start! (${lobby.players.length}/${MAX_PLAYERS} players)`}
 					</p>
 				</div>
 			)}

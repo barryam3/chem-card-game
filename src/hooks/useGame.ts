@@ -12,6 +12,7 @@ export interface GameData {
     id: string;
     name: string;
     isHost: boolean;
+    isComputer?: boolean;
     draftedCards?: number[];
     hand?: number[];
     score?: number;

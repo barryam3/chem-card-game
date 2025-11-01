@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { GameState, LobbyState, Player } from "./types";
+import { MAX_PLAYERS } from "./types";
 import { dealCards, generateGameId, canSpellWord } from "./gameLogic";
 
 const GAMES_COLLECTION = "games";
@@ -115,6 +116,33 @@ export async function updatePlayerName(
     ...updatedPlayers[playerIndex],
     name: newName,
   };
+
+  await updateDoc(gameDocRef, {
+    players: updatedPlayers,
+  });
+
+  return true;
+}
+
+// Add a computer player to the lobby
+export async function addComputerPlayer(
+  gameDocRef: DocumentReference,
+  gameData: Pick<LobbyState, "players">
+): Promise<boolean> {
+  if (gameData.players.length >= MAX_PLAYERS) {
+    return false;
+  }
+
+  const computerPlayerId = Math.random().toString(36).substring(2, 15);
+  const computerCount = gameData.players.filter((p) => p.isComputer).length;
+  const newComputerPlayer: Omit<Player, "draftedCards" | "hand" | "score"> = {
+    id: computerPlayerId,
+    name: `Computer ${computerCount + 1}`,
+    isHost: false,
+    isComputer: true,
+  };
+
+  const updatedPlayers = [...gameData.players, newComputerPlayer];
 
   await updateDoc(gameDocRef, {
     players: updatedPlayers,
