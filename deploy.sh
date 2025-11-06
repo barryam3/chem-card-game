@@ -156,7 +156,8 @@ incremental_deploy() {
 	git --work-tree "$deploy_directory" add --all
 
 	set +o errexit
-	diff=$(git --work-tree "$deploy_directory" diff --exit-code --quiet HEAD --)$?
+	git --work-tree "$deploy_directory" diff --exit-code --quiet HEAD -- >/dev/null 2>&1
+	diff=$?
 	set -o errexit
 	case $diff in
 		0) echo No changes to files in $deploy_directory. Skipping commit.;;
