@@ -120,6 +120,9 @@ main() {
 		return 1
 	fi
 
+	# Remove .DS_Store files from deploy directory (macOS system files)
+	find "$deploy_directory" -name ".DS_Store" -type f -delete 2>/dev/null || true
+
 	if git ls-remote --exit-code $repo "refs/heads/$deploy_branch" ; then
 		# deploy_branch exists in $repo; make sure we have the latest version
 		
