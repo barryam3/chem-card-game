@@ -146,19 +146,19 @@ export function canSpellWordWithSymbols(
   word: string
 ): string[] | null {
   if (word.length === 0) return [];
-  
+
   for (const atomicSymbol of atomicSymbols) {
     if (word.toLowerCase().startsWith(atomicSymbol.toLowerCase())) {
       const remainingSymbols = atomicSymbols.filter((s) => s !== atomicSymbol);
       const remainingWord = word.slice(atomicSymbol.length);
       const result = canSpellWordWithSymbols(remainingSymbols, remainingWord);
-      
+
       if (result !== null) {
         return [atomicSymbol, ...result];
       }
     }
   }
-  
+
   return null;
 }
 
@@ -196,7 +196,7 @@ export function calculateIonizationScore(atomicNumbers: number[]): number {
       positiveIons[chargeNum],
       negativeIons[chargeNum] || 0
     );
-    score += pairs * 3;
+    score += pairs * 5;
   }
 
   return score;
@@ -225,19 +225,22 @@ export function calculateSameFamilyScore(atomicNumbers: number[]): number {
   return familyScores[cappedElements] || 0;
 }
 
-export function calculateDifferentFamiliesScore(
-  atomicNumbers: number[]
-): number {
+export function countDistinctFamilies(atomicNumbers: number[]): number {
   const elements = getElementsFromAtomicNumbers(atomicNumbers);
   const familyCounts: Record<string, number> = {};
 
   for (const card of elements) {
     familyCounts[card.family] = (familyCounts[card.family] || 0) + 1;
   }
+  return Object.keys(familyCounts).length;
+}
 
-  const uniqueFamilies = Object.keys(familyCounts).length;
-
-  return uniqueFamilies;
+export function calculateDifferentFamiliesScore(
+  atomicNumbers: number[],
+): number {
+  const families = countDistinctFamilies(atomicNumbers);
+  if (families >= 8) return 2 * families;
+  return families;
 }
 
 // Calculate word spelling points for a specific player

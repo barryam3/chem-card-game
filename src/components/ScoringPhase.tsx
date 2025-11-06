@@ -168,7 +168,7 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({
 												<span>{playerScore.ionization}</span>
 											</div>
 											<div className="score-item">
-												<span>Same Family:</span>{" "}
+												<span>Largest Family:</span>{" "}
 												<span>{playerScore.sameFamily}</span>
 											</div>
 											<div className="score-item">

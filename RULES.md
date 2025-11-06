@@ -14,13 +14,13 @@ Each player selects a card to draft and places it face down in front of them. On
 
 ## Atomic Symbol Word Race
 
-At any point, you can say a word spelled using the atomic symbols on 3 or more of your drafted cards. The first few players to do so will score points.
+At any point, you can say a word spelled using the atomic symbols on 3 or more of your drafted cards. The first few players to do so will score points. The last opportunity is immediately after drafting your last card, just before scoring.
 
 _For example_, if you have drafted Germanium (Ge), Nickel (Ni), Uranium (U), and Sulfur (S), you can spell GeNiUS. You could not spell SiNG, since two-letter atomic symbols cannot be broken up.
 
 # Scoring
 
-**Different Families:** Score 1 point for each element family represented among your drafted cards. (There are 10.)
+**Different Families:** Score 1 point for each element family represented among your drafted cards. If you have the most, score 2 points per family instead.
 
 **Largest Family:** Determine the largest number of elements you drafted in the same family, then score points as follows:
 
@@ -28,7 +28,7 @@ _For example_, if you have drafted Germanium (Ge), Nickel (Ni), Uranium (U), and
 | :----- | :-- | :-- | :-- | :-- | :-- |
 | Points | 1   | 3   | 6   | 10  | 15  |
 
-**Ions:** Score 3 points for each pair of elements with the same value of opposite ionization. _For example,_ Na (+1) and Cl (-1) scores. _Each element can only participate in one pair._
+**Ions:** Score 5 points for each pair of elements with the same value of opposite ionization. _For example,_ Na (+1) and Cl (-1) scores. _Each element can only participate in one pair._
 
 **Atomic Number:** Sort your elements by atomic number, then count how many you have sequentially in order. _For example,_ if you have 1, 2, 3, and 5, your longest sequence would be size 3\. Score points as follows:
 

@@ -148,7 +148,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 						<div className="scoring-rule">
 							<h4>Ionization</h4>
 							<p>
-								Score 3 points for each matching pair of positive and negative
+								Score 5 points for each matching pair of positive and negative
 								ions with the same number of charges. Each element can only be
 								used in one pair.
 							</p>
@@ -156,7 +156,10 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 
 						<div className="scoring-rule">
 							<h4>Family</h4>
-							<p>Score 1 point per unique element family.</p>
+							<p>
+								Score 1 point per unique element family. If you have at least 8
+								families, score 2 points per family instead.
+							</p>
 							<p>
 								Score points for the number of elements you have in your largest
 								family as follows:
