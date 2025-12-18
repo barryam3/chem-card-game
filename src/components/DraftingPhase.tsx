@@ -159,7 +159,7 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 				const hasWonWordRace = game.wordSpellingWinners.some(
 					(w) => w.playerId === player.id,
 				);
-				
+
 				// If they've already won, mark as processed and skip
 				if (hasWonWordRace) {
 					const wordSpellingKey = `${player.id}-${game.currentRound}`;
@@ -191,7 +191,10 @@ export const DraftingPhase: React.FC<DraftingPhaseProps> = ({
 									processedWordSpellingRef.current.add(wordSpellingKey);
 								} catch (error) {
 									// If they've already won, mark as processed to avoid retrying
-									if (error instanceof Error && error.message === "You have already spelled a word.") {
+									if (
+										error instanceof Error &&
+										error.message === "You have already spelled a word."
+									) {
 										processedWordSpellingRef.current.add(wordSpellingKey);
 									}
 									console.error("Computer player word spelling failed:", error);

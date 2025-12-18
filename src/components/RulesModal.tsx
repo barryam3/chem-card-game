@@ -157,8 +157,8 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 						<div className="scoring-rule">
 							<h4>Family</h4>
 							<p>
-								Score 1 point per unique element family. If you have at least 8
-								families, score 2 points per family instead.
+								Score 1 point per unique element family. If you have the most
+								and at least 7 families, score 2 points per family instead.
 							</p>
 							<p>
 								Score points for the number of elements you have in your largest

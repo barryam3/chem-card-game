@@ -237,9 +237,10 @@ export function countDistinctFamilies(atomicNumbers: number[]): number {
 
 export function calculateDifferentFamiliesScore(
   atomicNumbers: number[],
+  mostFamilies: number
 ): number {
   const families = countDistinctFamilies(atomicNumbers);
-  if (families >= 8) return 2 * families;
+  if (families >= 7 && families === mostFamilies) return 2 * families;
   return families;
 }
 
@@ -281,6 +282,7 @@ export function calculateWordSpellingPoints(
 // Calculate total score for a player
 export function calculateTotalScore(
   playerAtomicNumbers: number[],
+  mostFamilies: number,
   leftNeighborAtomicNumbers: number[],
   rightNeighborAtomicNumbers?: number[],
   wordSpellingBonus = 0,
@@ -298,8 +300,10 @@ export function calculateTotalScore(
     : 0;
   const ionization = calculateIonizationScore(playerAtomicNumbers);
   const sameFamily = calculateSameFamilyScore(playerAtomicNumbers);
-  const differentFamilies =
-    calculateDifferentFamiliesScore(playerAtomicNumbers);
+  const differentFamilies = calculateDifferentFamiliesScore(
+    playerAtomicNumbers,
+    mostFamilies
+  );
 
   const total =
     atomicNumber +

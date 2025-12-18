@@ -20,7 +20,7 @@ _For example_, if you have drafted Germanium (Ge), Nickel (Ni), Uranium (U), and
 
 # Scoring
 
-**Different Families:** Score 1 point for each element family represented among your drafted cards. If you have the most, score 2 points per family instead.
+**Different Families:** Score 1 point for each element family represented among your drafted cards. If you have the most and at least 7, score 2 points per family instead.
 
 **Largest Family:** Determine the largest number of elements you drafted in the same family, then score points as follows:
 

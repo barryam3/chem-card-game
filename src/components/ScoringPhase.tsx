@@ -4,6 +4,7 @@ import { Card } from "./Card";
 import {
 	calculateTotalScore,
 	calculateWordSpellingPoints,
+	countDistinctFamilies,
 	getDeckConfig,
 	getElementByAtomicNumber,
 } from "../gameLogic";
@@ -26,6 +27,10 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({
 	const scores = useMemo(() => {
 		const calculatedScores: { [playerId: string]: GameScore } = {};
 
+		const mostFamilies = game.players.reduce((max, player) => {
+			return Math.max(max, countDistinctFamilies(player.draftedCards));
+		}, 0);
+
 		game.players.forEach((player, index) => {
 			const leftNeighbor =
 				game.players[index === 0 ? game.players.length - 1 : index - 1];
@@ -43,6 +48,7 @@ export const ScoringPhase: React.FC<ScoringPhaseProps> = ({
 
 			calculatedScores[player.id] = calculateTotalScore(
 				player.draftedCards,
+				mostFamilies,
 				leftNeighbor.draftedCards,
 				rightNeighbor?.draftedCards,
 				wordSpellingBonus,
