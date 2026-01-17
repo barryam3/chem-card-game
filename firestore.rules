@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for validation
+    function isValidGameId(gameId) {
+      return gameId is string && gameId.size() == 6 && gameId.matches('[A-Z0-9]+');
+    }
+    
+    function isValidPlayerName(name) {
+      return name is string && name.size() >= 1 && name.size() <= 50;
+    }
+    
+    function isValidPlayer(player) {
+      return player.keys().hasAll(['id', 'name', 'isHost']) &&
+             player.id is string &&
+             isValidPlayerName(player.name) &&
+             player.isHost is bool &&
+             // Optional fields for active games
+             (!('draftedCards' in player) || player.draftedCards is list) &&
+             (!('hand' in player) || player.hand is list) &&
+             (!('score' in player) || player.score is number);
+    }
+    
+    function isValidLobbyPhaseData(data) {
+      return data.keys().hasAll(['id', 'phase', 'players', 'hostId', 'expireAt']) &&
+             data.id is string &&
+             data.phase == 'lobby' &&
+             data.players is list &&
+             data.players.size() >= 1 && data.players.size() <= 10 && // Max 10 players
+             data.hostId is string &&
+             data.expireAt is timestamp;
+    }
+    
+    function isValidActiveGameData(data) {
+      return data.keys().hasAll(['id', 'phase', 'players', 'currentRound', 'totalRounds', 'expireAt', 'hostId']) &&
+             data.phase in ['drafting', 'scoring', 'finished'] &&
+             data.players is list &&
+             data.players.size() >= 2 && data.players.size() <= 10 &&
+             data.currentRound is number && data.currentRound >= 1 && data.currentRound <= 50 &&
+             data.totalRounds is number && data.totalRounds >= 1 && data.totalRounds <= 50 &&
+             data.expireAt is timestamp &&
+             (!('wordSpellingWinners' in data) || data.wordSpellingWinners is list);
+    }
+    
+    function isValidGameData(data) {
+      return (data.phase == 'lobby' && isValidLobbyPhaseData(data)) ||
+             (data.phase in ['drafting', 'scoring', 'finished'] && isValidActiveGameData(data));
+    }
+    
+    // Games collection - unified collection for lobbies and active games
+    match /games/{gameId} {
+      // Allow reading any game
+      allow read: if true;
+      
+      // Allow creating new games (lobby phase)
+      allow create: if isValidGameData(request.resource.data) &&
+                       request.resource.data.phase == 'lobby' &&
+                       isValidGameId(request.resource.data.id);
+      
+      // Allow updating games
+      allow update: if isValidGameData(request.resource.data) &&
+                       // Preserve the game ID
+                       request.resource.data.id == resource.data.id &&
+                       // Don't allow changing expiry timestamp
+                       request.resource.data.expireAt == resource.data.expireAt &&
+                       // Don't allow changing host ID
+                       request.resource.data.hostId == resource.data.hostId;
+      
+      // Don't allow deleting games (they auto-delete via TTL)
+      allow delete: if false;
+    }
+    
+    // Deny access to all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

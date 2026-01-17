@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <defs>
+    <!-- Card gradient -->
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8f9fa"/>
+    </linearGradient>
+    <!-- Atom gradient -->
+    <radialGradient id="atomGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4285f4"/>
+      <stop offset="70%" stop-color="#1a73e8"/>
+      <stop offset="100%" stop-color="#0d47a1"/>
+    </radialGradient>
+    <!-- Electron orbit gradient -->
+    <linearGradient id="orbitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34a853"/>
+      <stop offset="50%" stop-color="#fbbc04"/>
+      <stop offset="100%" stop-color="#ea4335"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Playing card background -->
+  <rect x="2" y="2" width="28" height="28" rx="3" ry="3" 
+        fill="url(#cardGradient)" 
+        stroke="#e0e0e0" 
+        stroke-width="1"/>
+  
+  <!-- Card shadow -->
+  <rect x="1" y="1" width="28" height="28" rx="3" ry="3" 
+        fill="none" 
+        stroke="#bdbdbd" 
+        stroke-width="0.5" 
+        opacity="0.5"/>
+  
+  <!-- Atom nucleus (center) -->
+  <circle cx="16" cy="16" r="3" 
+          fill="url(#atomGradient)"/>
+  
+  <!-- Electron orbits -->
+  <!-- Horizontal orbit -->
+  <ellipse cx="16" cy="16" rx="10" ry="4" 
+           fill="none" 
+           stroke="url(#orbitGradient)" 
+           stroke-width="1.5" 
+           opacity="0.8"/>
+  
+  <!-- Diagonal orbit 1 -->
+  <ellipse cx="16" cy="16" rx="10" ry="4" 
+           fill="none" 
+           stroke="url(#orbitGradient)" 
+           stroke-width="1.5" 
+           opacity="0.8"
+           transform="rotate(60 16 16)"/>
+  
+  <!-- Diagonal orbit 2 -->
+  <ellipse cx="16" cy="16" rx="10" ry="4" 
+           fill="none" 
+           stroke="url(#orbitGradient)" 
+           stroke-width="1.5" 
+           opacity="0.8"
+           transform="rotate(-60 16 16)"/>
+  
+  <!-- Electrons -->
+  <circle cx="26" cy="16" r="1.5" fill="#ea4335"/>
+  <circle cx="6" cy="16" r="1.5" fill="#ea4335"/>
+  <circle cx="24.5" cy="9" r="1.5" fill="#fbbc04"/>
+  <circle cx="7.5" cy="23" r="1.5" fill="#fbbc04"/>
+  <circle cx="24.5" cy="23" r="1.5" fill="#34a853"/>
+  <circle cx="7.5" cy="9" r="1.5" fill="#34a853"/>
+  
+  <!-- Corner element symbol -->
+  <text x="4" y="7" 
+        font-family="Arial, sans-serif" 
+        font-size="4" 
+        font-weight="bold" 
+        fill="#666">H</text>
+  
+  <!-- Corner atomic number -->
+  <text x="4" y="11" 
+        font-family="Arial, sans-serif" 
+        font-size="3" 
+        fill="#999">1</text>
+</svg>

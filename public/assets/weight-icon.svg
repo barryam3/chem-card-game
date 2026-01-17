@@ -1,0 +1,17 @@
+<svg width="10" height="16" viewBox="-1 0 10 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+  <!-- Scale weight icon - exact bounds viewBox -->
+  <g>
+    <!-- Main weight body - medium width trapezoid -->
+    <path d="M0 6 L8 6 L9 15 L-1 15 Z" />
+    
+    <!-- Top handle/hook -->
+    <rect x="3" y="0" width="2" height="6" rx="1" />
+    
+    <!-- Weight markings/ridges -->
+    <line x1="0.5" y1="9" x2="7.5" y2="9" stroke="rgba(255,255,255,0.3)" stroke-width="0.3" />
+    <line x1="1" y1="11.5" x2="7" y2="11.5" stroke="rgba(255,255,255,0.3)" stroke-width="0.3" />
+    
+    <!-- Bottom edge highlight -->
+    <line x1="-1" y1="15" x2="9" y2="15" stroke="rgba(0,0,0,0.2)" stroke-width="0.5" />
+  </g>
+</svg>
