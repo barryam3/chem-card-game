@@ -93,7 +93,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 											</td>
 											<td>4</td>
 											<td>9</td>
-											<td>16</td>
+											<td>4/ea</td>
 										</tr>
 									</tbody>
 								</table>
@@ -105,7 +105,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 							<p>
 								If the total atomic mass of your drafted cards is greater than
 								that of your neighbor (the players passing to and receiving from
-								you), you score 4 points. If it is lower, you lose 4 points. (In
+								you), you score 3 points. If it is lower, you lose 3 points. (In
 								a two-player game, you only have one opponent.)
 							</p>
 						</div>
@@ -172,8 +172,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 											<th>2</th>
 											<th>3</th>
 											<th>4</th>
-											<th>5</th>
-											<th>6+</th>
+											<th>5+</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -184,8 +183,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
 											<td>1</td>
 											<td>3</td>
 											<td>6</td>
-											<td>10</td>
-											<td>15</td>
+											<td>2/ea</td>
 										</tr>
 									</tbody>
 								</table>

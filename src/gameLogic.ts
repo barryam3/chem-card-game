@@ -93,7 +93,7 @@ export function calculateAtomicNumberScore(atomicNumbers: number[]): number {
 
   // Cap the sequence length at 4 (minimum 2, maximum 4)
   const cappedSequence = Math.min(Math.max(maxSequence, 2), 4);
-  return cappedSequence * cappedSequence;
+  return cappedSequence > 4 ? cappedSequence * 4 : cappedSequence ** 2;
 }
 
 // Calculate atomic mass score (compare with neighbors)
@@ -122,11 +122,11 @@ export function calculateatomicWeightScore(
   );
 
   let score = 0;
-  if (playerMass > leftMass) score += 4;
-  if (playerMass < leftMass) score -= 4;
+  if (playerMass > leftMass) score += 3;
+  if (playerMass < leftMass) score -= 3;
   if (rightMass) {
-    if (playerMass > rightMass) score += 4;
-    if (playerMass < rightMass) score -= 4;
+    if (playerMass > rightMass) score += 3;
+    if (playerMass < rightMass) score -= 3;
   }
 
   return score;
@@ -218,11 +218,10 @@ export function calculateSameFamilyScore(atomicNumbers: number[]): number {
     2: 1,
     3: 3,
     4: 6,
-    5: 10,
-    6: 15,
+    // 5+: 2/ea
   };
 
-  return familyScores[cappedElements] || 0;
+  return familyScores[cappedElements] ?? 2 * cappedElements;
 }
 
 export function countDistinctFamilies(atomicNumbers: number[]): number {
